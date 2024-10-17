@@ -14,7 +14,7 @@ addpath(fullfile('.', dir('*eeglab*').name)); % eeglab folder
 addpath(fullfile('.', dir('*fieldtrip*').name)); % add Fieldtrip
 addpath(fullfile('.', 'utils')); % add utility functions
 dir_data = fullfile('.','data'); % raw data path
-dir_chanslocs = fullfile(proj_dir, dir('*eeglab*').name, '/plugins/dipfit5.4/standard_BEM/elec/standard_1005.elc');
+dir_chanslocs = fullfile(proj_dir, dir('*eeglab*').name, 'plugins', dir('*eeglab*\plugins\*dipfit*').name, '/standard_BEM/elec/standard_1005.elc');
 files = dir(fullfile(dir_data, 'raw\*.xdf')); % listing datasets
 
 ft_defaults; % Fieldtrip defaults
@@ -41,11 +41,8 @@ for sub = 1:1%length(files)
     %% Extract EEG and motion data from XDF file
     for i = 1:length(data)
         currentName = data{1, i}.info.name;
-
         if contains(currentName, 'Pose', 'IgnoreCase', true)
             mp = data{1, i}; % Pose (motion) data
-        elseif contains(currentName, 'Android_EEG', 'IgnoreCase', true)
-            eeg = data{1, i}; % EEG data
         end
     end
 
@@ -87,7 +84,7 @@ for sub = 1:1%length(files)
     cfg.eeg.InstitutionAddress = 'Ammerlaender Heerstr. 114-118, 26129 Oldenburg, Germany';
     cfg.eeg.ManufacturersModelName = 'mbraintrain';
     cfg.eeg.SoftwareFilters = "n/a";
-    
+
     % specify coordsys
     cfg.coordsystem.EEGCoordinateSystem = "CTF";
     cfg.coordsystem.EEGCoordinateUnits = "mm";

@@ -4,7 +4,7 @@ This project involves analyzing EEG data collected during basketball activities.
 
 ## Directory Structure
 
-- `data/`: Contains all the raw and processed EEG data files.
+- `data/raw`: Contains all the raw `.xdf` files and `.mat` event files.
 - `scripts/`: Contains MATLAB scripts for data processing and analysis.
 
 ## Usage
