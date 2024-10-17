@@ -1,13 +1,21 @@
 %% Convert source data to BIDS
 clc; clear; close all;
 
-%% Load required paths and libraries
+% Get the full path of the current script
+scriptPath = fileparts(mfilename('fullpath'));
+proj_dir = fullfile(scriptPath, '..')
+proj_dir = char(java.io.File(proj_dir).getCanonicalPath); % Convert to canonical absolute path
 
-mainpath = 'C:\Users\koes4731\Desktop\eeglab2023.0\'; % eeglab folder
-addpath('C:\Users\koes4731\Desktop\fieldtrip-20230215\'); % add Fieldtrip
-path = 'C:\Users\koes4731\Desktop\Thesis\MediaPipe\'; % raw data path
-outpath = 'C:\Users\koes4731\Desktop\Thesis\data_hoops\'; % BIDS output path
-files = dir(fullfile(path, '\*.xdf')); % listing datasets
+% Change to the parent directory of the script
+cd(fullfile(proj_dir));
+
+%% Load required paths and libraries
+addpath(fullfile('.', dir('*eeglab*').name)); % eeglab folder
+addpath(fullfile('.', dir('*fieldtrip*').name)); % add Fieldtrip
+addpath(fullfile('.', 'utils')); % add utility functions
+dir_data = fullfile('.','data'); % raw data path
+dir_chanslocs = fullfile(proj_dir, dir('*eeglab*').name, '/plugins/dipfit5.4/standard_BEM/elec/standard_1005.elc');
+files = dir(fullfile(dir_data, 'raw\*.xdf')); % listing datasets
 
 ft_defaults; % Fieldtrip defaults
 % some about the version
@@ -23,12 +31,11 @@ cfg.bidsroot = './data/bids';  % write to the present working directory
 
 %% Loop over datasets
 
-for sub = 1: 1%length(files)
+for sub = 1:1%length(files)
 
     participant = extractBefore(files(sub).name, '.xdf');  % get subject name
-    data = load_xdf([path, files(sub).name]); % Saving the data in a variable
-    out_subfold = [outpath, participant, '\\'];
-    load([out_subfold, 'events_', participant,'.mat']); % Loading events file
+    data = load_xdf(fullfile(dir_data,'raw', files(sub).name)); % Saving the data in a variable
+    load((fullfile(dir_data,'raw', ['events_', participant,'.mat']))); % Loading events file
 
 
     %% Extract EEG and motion data from XDF file
@@ -42,38 +49,36 @@ for sub = 1: 1%length(files)
         end
     end
 
+    %% Modality agnostic info
+
+    % Generate dataset_description.json
+    cfg.dataset_description.Name = 'Readiness Potential in Basketball';
+    cfg.dataset_description.BIDSVersion = '1.9';
+    cfg.dataset_description.Authors = {'Miguel Contreras-Altamirano', 'Stefan Debener'};
+    cfg.dataset_description.License = 'Creative Commons';
+    cfg.dataset_description.DatasetType = 'raw';
+
     %% EEG Data Conversion
 
-    [ALLEEG EEG CURRENTSET ALLCOM] = eeglab; % Open EEGLAB
-
     % Import EEG, add channel locations, and add events
-    EEG = pop_loadxdf([path, files(sub).name], 'streamtype', 'EEG', 'exclude_markerstreams', {});
-    EEG = pop_chanedit(EEG, 'lookup', [mainpath, 'plugins/dipfit/standard_BEM/elec/standard_1005.elc']); % Add channel info
+    EEG = pop_loadxdf(fullfile(dir_data,'raw', files(sub).name), 'streamtype', 'EEG', 'exclude_markerstreams', {});
+    EEG = pop_chanedit(EEG, 'lookup', dir_chanslocs); % Add channel info
     EEG.event = events; % Add events
     EEG = eeg_checkset(EEG, 'eventconsistency'); % Check event consistency
-    eeglab redraw; % Update GUI
 
     % Channel labels and electrode info
     eeg_channel_labels = {EEG.chanlocs.labels};
-    elec_file = [mainpath, 'plugins/dipfit/standard_BEM/elec/standard_1005.elc'];
+    elec_file = dir_chanslocs;
     elec = ft_read_sens(elec_file); % Load electrode file
     cfg.elec = elec;
     
     % Define Fieldtrip EEG structure (eeglab2fieldtrip)
     data_eeg = eeglab2fieldtrip( EEG, 'raw', 'none');
-    eeg = data_eeg;
-
-    % % Define Fieldtrip EEG structure
-    % ft_data_eeg = [];
-    % ft_data_eeg.trial{1} = eeg.time_series; % EEG data (channels x timepoints)
-    % ft_data_eeg.time{1} = eeg.time_stamps; % Time points for data
-    % ft_data_eeg.label = eeg_channel_labels; % 42 EEG channel labels
-    % ft_data_eeg.elec = elec; % Electrode structure for the 42 channels
 
     % BIDS-specific settings for EEG
     cfg.sub = extractAfter(participant, 'sub_');
     cfg.datatype = 'eeg';
-    ft_checkdata(eeg);
+    ft_checkdata(data_eeg);
     cfg.task = 'Freethrow';
 
     cfg.eeg.PowerLineFrequency = 50; % Power line frequency (50Hz for EU)
@@ -81,49 +86,19 @@ for sub = 1: 1%length(files)
     cfg.eeg.InstitutionName = 'University of Oldenburg';
     cfg.eeg.InstitutionAddress = 'Ammerlaender Heerstr. 114-118, 26129 Oldenburg, Germany';
     cfg.eeg.ManufacturersModelName = 'mbraintrain';
+    cfg.eeg.SoftwareFilters = "n/a";
+    
+    % specify coordsys
+    cfg.coordsystem.EEGCoordinateSystem = "CTF";
+    cfg.coordsystem.EEGCoordinateUnits = "mm";
+    
 
-    % Generate dataset_description.json
-    cfg.dataset_description.Name = 'Readiness Potential in Basketball';
-    cfg.dataset_description.BIDSVersion = 'v1.9';
-    cfg.dataset_description.Authors = {'Miguel Contreras-Altamirano', 'Stefan Debener'};
-    cfg.dataset_description.License = 'Creative Commons';
-    cfg.dataset_description.DatasetType = 'raw';
 
     % Generate README file
     README = sprintf('The experiment included 27 participants. \n- Miguel Contreras-Altamirano (December, 2024)');
 
     % Call data2bids for EEG
     data2bids(cfg, data_eeg);
-
-
-    %% Generate EEG coordsystem.json
-    
-% % Ensure the 'eeg' subfolder exists before trying to write the file
-% eeg_folder = fullfile(out_subfold, 'eeg');
-% if ~exist(eeg_folder, 'dir')
-%     mkdir(eeg_folder);  % Create the 'eeg' folder if it doesn't exist
-% end
-% 
-% % Generate the coordsystem.json file for EEG data
-% coordsystem_json = fullfile(eeg_folder, [participant '_coordsystem.json']);
-% fid = fopen(coordsystem_json, 'w');
-% 
-% % Ensure the file opened successfully
-% if fid == -1
-%     error('Could not open file for writing: %s', coordsystem_json);
-% end
-% 
-% % Write the required keys into the coordsystem.json
-% fprintf(fid, '{\n');
-% fprintf(fid, '    "EEGCoordinateSystem": "CTF",\n'); % Replace "CTF" with the correct system if applicable
-% fprintf(fid, '    "EEGCoordinateUnits": "mm",\n');  % Units for the EEG coordinates
-% fprintf(fid, '    "Manufacturer": "mbraintrain",\n'); % Manufacturer of the EEG device
-% fprintf(fid, '    "ManufacturersModelName": "mbraintrain",\n'); % Model name of the EEG system
-% fprintf(fid, '    "CapManufacturersModelName": "mbraintrain cap",\n'); % Model of the EEG cap
-% fprintf(fid, '    "EEGCoordinateSystemDescription": "Standard 1005",\n'); % Description of the EEG system
-% fprintf(fid, '    "EEGCoordinateSystemReference": "https://doi.org/10.1371/journal.pbio.1002295"\n'); % Reference link for the coordinate system
-% fprintf(fid, '}');
-% fclose(fid);
 
 
     %% Motion Data (MediaPipe) Conversion
@@ -168,6 +143,11 @@ for sub = 1: 1%length(files)
         };
 
     % BIDS motion data settings
+    cfg = [];
+    cfg.sub = extractAfter(participant, 'sub_');
+    cfg.datatype = 'motion';
+    cfg.task = 'Freethrow';
+    cfg.bidsroot = './data/bids'
     cfg.tracksys = 'MediaPipe';
     cfg.motion.TrackingSystemName = 'MediaPipe';
     cfg.motion.samplingrate = sampling_rate_mp;
@@ -175,13 +155,14 @@ for sub = 1: 1%length(files)
     % specify channel details, this overrides the details in the original data structure
     cfg.channels = [];
     cfg.channels.name = mocap.label;
-    cfg.channels.tracked_point = mocap.label;
+    cfg.channels.component = cellstr(repmat({'x','y','z'},1, length(mocap.label)/3));
     cfg.channels.type = cellstr(repmat('POS',length(mocap.label),1));
+    cfg.channels.tracked_point = mocap.label;
     cfg.channels.units = cellstr(repmat('m',length(mocap.label),1));
 
     mocap = ft_datatype_raw(mocap);
 
-    cfg.datatype = 'motion';
+
     data2bids(cfg, mocap);
 
 end

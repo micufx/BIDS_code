@@ -16,6 +16,8 @@ Each script in the `scripts` directory accesses files from the `data` directory.
 - MATLAB
 - fieldtrip toolbox (fieldtrip-20230215)
 - EEGLAB toolbox (2023.0)
+- xdfimport extension for eeglab
+- dipfit extension for eeglab
 
 ## Running the Scripts
 

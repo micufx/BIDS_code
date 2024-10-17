@@ -2,3 +2,8 @@
 
 # ignore data files
 data/raw/*
+data/bids/*
+
+# ignore fieldtrip and eeglab toolbox folder
+fieldtrip*/
+eeglab*/
