@@ -12,7 +12,7 @@ num_conditions = 3; % (Conditions and overall: 1=hit 2=miss 3=all)
 
 %% Selecting participant
 
-for sub = 1 :1%length(files)
+for sub = 1 : length(files)
 
     participant = extractBefore(files(sub).name, '.xdf');
     out_subfold = [outpath, participant, '\\'];
@@ -20,7 +20,7 @@ for sub = 1 :1%length(files)
     load([outpath, 'Info_EEG.mat']); % Loading channels file
 
 
-    for cond=3 : num_conditions
+    for cond=1 : num_conditions
 
         load([out_subfold, 'events_all_', participant,'.mat']); % Loading events file
 
@@ -440,26 +440,27 @@ for sub = 1 :1%length(files)
         % Set the y-axis limits for the ACC data to show the full range
         set(ax2, 'YLim', [accMin, accMax]); % [accMin, accMax]
 
-
         % Plot ACC data on the second axes
         hold(ax2, 'on');
         accLine = plot(ax2, timestamps_acc_mag, timeseries_acc_mag, 'Color', "k", 'LineStyle', '-', ...
             'Marker', 'o', 'MarkerIndices', 1:10:length(timeseries_acc_mag),'LineWidth', 2.5);
-
 
         % % Create the shaded area representing the SD around the mean
         % fill([timestamps_acc_mag fliplr(timestamps_acc_mag)], ...
         %     [upper_bound_rev' fliplr(lower_bound_rev')], ...
         %     'k', 'FaceAlpha', 0.05, 'EdgeColor', 'none');
 
-        % Plot the Basketball onset
-        accOnset_rev = line(ax2, [avgOnsetTime_rev avgOnsetTime_rev], [0, max(timeseries_acc_mag)], 'Color', 'black', 'LineStyle', ':', 'LineWidth', 2);   % [accMin, accMax]
+        % Plot the movement onset
+        accOnset_rev = line(ax2, [avgOnsetTime_rev avgOnsetTime_rev], [0, accMax], 'Color', 'black', 'LineStyle', ':', 'LineWidth', 2);   % [accMin, accMax]
         
-        % Adding line of the movement onset
+        % Adding line of the Basketball onset
         currentPointLine_PLD_onset = line(subplotERP, [0, 0], yLimits, 'Color', 'r', 'LineWidth', 2, 'Linestyle', '--');
+        
+        % Add a label to the line basketball onset
+        text(ax2, currentPointLine_PLD_onset, accMax, 'ACC', 'Color', 'r', 'FontSize', 10, 'HorizontalAlignment', 'right', 'VerticalAlignment', 'top', 'Rotation', 90, 'FontWeight','bold');
 
-        % Add a label to the line
-        %text(ax2, avgOnsetTime_rev, accMax-9, 'RC', 'Color', 'k', 'FontSize', 10, 'HorizontalAlignment', 'right', 'VerticalAlignment', 'middle', 'Rotation', 90, 'FontWeight','bold');
+        % Add a label to the line movement onset
+        text(ax2, avgOnsetTime_rev, accMax, 'MP', 'Color', 'k', 'FontSize', 10, 'HorizontalAlignment', 'right', 'VerticalAlignment', 'top', 'Rotation', 90, 'FontWeight','bold');
 
         % % Plot the onset marker off the Derivative Method
         % accOnset_dev = line(ax2, [onsetTime_acc_dev onsetTime_acc_dev], [accMin, accMax], 'Color', "#D95319", 'LineStyle', '--', 'LineWidth', 2.5);
@@ -779,53 +780,53 @@ for sub = 1 :1%length(files)
 
         %% Saving per condition or general average
 
-        % if cond == 1 % 'hit'
-        % 
-        % 
-        %     % Save it in .mat file
-        %     save([out_subfold, 'hoop_motion_hit_', participant,'.mat'], 'EEG', 'GFP', 'timeseries_mp', 'timestamps_mp', ...
-        %         'erp_pre_SD', 'timestamps_acc_mag', 'timeseries_acc_mag', 'onsetTime_acc', 'onsetIndex_acc', 'shoot_per',...
-        %         'sampling_rate_eeg', 'sampling_rate_mp', 'landmarksPerTrial', 'timestampsPerTrial', 'basketball_onset');
-        % 
-        % 
-        % 
-        % elseif cond == 2 % 'miss'
-        % 
-        %     % Save it in .mat file
-        %     save([out_subfold, 'hoop_motion_miss_', participant,'.mat'], 'EEG', 'GFP', 'timeseries_mp', 'timestamps_mp', ...
-        %         'erp_pre_SD', 'timestamps_acc_mag', 'timeseries_acc_mag', 'onsetTime_acc', 'onsetIndex_acc', 'shoot_per',...
-        %         'sampling_rate_eeg', 'sampling_rate_mp', 'landmarksPerTrial', 'timestampsPerTrial', 'basketball_onset');
-        % 
-        % 
-        % 
-        % elseif cond == 3  % % 'none'
-        % 
-        %     % Save it in .mat file
-        %     save([out_subfold, 'hoop_motion_', participant,'.mat'], 'EEG', 'GFP', 'timeseries_mp', 'timestamps_mp', ...
-        %         'erp_pre_SD', 'timestamps_acc_mag', 'timeseries_acc_mag', 'onsetTime_acc', 'onsetIndex_acc', 'shoot_per',...
-        %         'sampling_rate_eeg', 'sampling_rate_mp', 'landmarksPerTrial', 'timestampsPerTrial', 'basketball_onset');
-        % 
-        % end
+        if cond == 1 % 'hit'
+
+
+            % Save it in .mat file
+            save([out_subfold, 'hoop_motion_hit_', participant,'.mat'], 'EEG', 'GFP', 'timeseries_mp', 'timestamps_mp', ...
+                'erp_pre_SD', 'timestamps_acc_mag', 'timeseries_acc_mag', 'onsetTime_acc', 'onsetIndex_acc', 'shoot_per',...
+                'sampling_rate_eeg', 'sampling_rate_mp', 'landmarksPerTrial', 'timestampsPerTrial', 'basketball_onset');
+
+
+
+        elseif cond == 2 % 'miss'
+
+            % Save it in .mat file
+            save([out_subfold, 'hoop_motion_miss_', participant,'.mat'], 'EEG', 'GFP', 'timeseries_mp', 'timestamps_mp', ...
+                'erp_pre_SD', 'timestamps_acc_mag', 'timeseries_acc_mag', 'onsetTime_acc', 'onsetIndex_acc', 'shoot_per',...
+                'sampling_rate_eeg', 'sampling_rate_mp', 'landmarksPerTrial', 'timestampsPerTrial', 'basketball_onset');
+
+
+
+        elseif cond == 3  % % 'none'
+
+            % Save it in .mat file
+            save([out_subfold, 'hoop_motion_', participant,'.mat'], 'EEG', 'GFP', 'timeseries_mp', 'timestamps_mp', ...
+                'erp_pre_SD', 'timestamps_acc_mag', 'timeseries_acc_mag', 'onsetTime_acc', 'onsetIndex_acc', 'shoot_per',...
+                'sampling_rate_eeg', 'sampling_rate_mp', 'landmarksPerTrial', 'timestampsPerTrial', 'basketball_onset');
+
+        end
 
 
         disp([participant, ' finalized!']);
 
 
-        % clear hitOnsets
-        % clear missOnsets
-        % clear hitFrames
-        % clear missFrames
-        % clear onsetTimes
-        % clear onsetFrames
-        % 
-        % clear timestamps_mp
-        % clear timeseries_mp
-        % clear timestamps_eeg
-        % clear timeseries_eeg
-        % clear timestamps_acc_mag
-        % clear timeseries_acc_mag
-        % clear timestamps_acc_mag_dev
-        % clear timeseries_eeg_mag_dev
+        clear hitOnsets
+        clear missOnsets
+        clear hitFrames
+        clear missFrames
+        clear onsetTimes
+        clear onsetFrames
+
+        clear timestamps_mp
+        clear timeseries_mp
+        clear timestamps_eeg
+        clear timeseries_eeg
+        clear timestamps_acc_mag
+        clear timeseries_acc_mag
+        clear timestamps_acc_mag_dev
+        clear timeseries_eeg_mag_dev
 
 
     end
@@ -836,12 +837,12 @@ end
 
 %% Table shooting percentage accuracy
 
-% % write actual tables
-% T.Accuracy = Hoop_accuracy';
-% 
-% % Save it in .mat file
-% save([outpath, 'Info_EEG.mat'],'T');
-% % writetable(T, [outpath, 'Info_EEG.xlsx']);
+% write actual tables
+T.Accuracy = Hoop_accuracy';
+
+% Save it in .mat file
+save([outpath, 'Info_EEG.mat'],'T');
+% writetable(T, [outpath, 'Info_EEG.xlsx']);
 
 
 %%
