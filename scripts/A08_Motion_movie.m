@@ -10,6 +10,12 @@ files = dir( fullfile( path,'\*.xdf')); % listing data sets
 num_conditions = 3; % (Conditions and overall: 1=hit 2=miss 3=all)
 
 
+% Ask the user if they want to create a video
+create_video = input('Do you want to create a video for the analysis? (yes/no): ', 's');
+create_video = lower(create_video);  % Normalize input
+create_video_flag = strcmp(create_video, 'yes');  % Flag for video creation
+
+
 %% Selecting participant
 
 for sub = 1 : length(files)
@@ -190,26 +196,6 @@ for sub = 1 : length(files)
         % Overwrite the timeseries and timestamps with the averaged data
         timeseries_mp = meanLandmarks;
         timestamps_mp = timestamps_eeg;  % Make sure you use the EEG timestamps
-
-
-        %% Settings for video
-
-        if cond == 1 % hit
-            videoFile = ['hoop_hit_', participant,'.mp4'];
-
-        elseif cond == 2 % miss
-            videoFile = ['hoop_miss_', participant,'.mp4'];
-
-        elseif cond == 3 % none
-            videoFile = ['hoop_', participant,'.mp4'];
-
-        end
-
-        % Set up video writer
-        videoObj = VideoWriter(videoFile, 'MPEG-4');
-        videoObj.FrameRate = 20;  % Adjust the frame rate as needed
-        open(videoObj);
-
 
         %% Motion visualization
 
@@ -452,10 +438,10 @@ for sub = 1 : length(files)
 
         % Plot the movement onset
         accOnset_rev = line(ax2, [avgOnsetTime_rev avgOnsetTime_rev], [0, accMax], 'Color', 'black', 'LineStyle', ':', 'LineWidth', 2);   % [accMin, accMax]
-        
+
         % Adding line of the Basketball onset
         currentPointLine_PLD_onset = line(subplotERP, [0, 0], yLimits, 'Color', 'r', 'LineWidth', 2, 'Linestyle', '--');
-        
+
         % Add a label to the line basketball onset
         text(ax2, currentPointLine_PLD_onset, accMax, 'ACC', 'Color', 'r', 'FontSize', 10, 'HorizontalAlignment', 'right', 'VerticalAlignment', 'top', 'Rotation', 90, 'FontWeight','bold');
 
@@ -495,282 +481,304 @@ for sub = 1 : length(files)
         % Define the skip factor (e.g., plot every 5th time point)
         %skipFactor = 100; % Just to display faster if neccesary
 
-        % Loop through the frames to create the animation
-        for i = 1 :numFrames %skipFactor :
 
-            landmarks = timeseries_mp(:, i);
+        %% Settings for video - Video Generation Part
+        if create_video_flag  % Only run this if the user chose to create a video
 
-            % Extract the Y-coordinates of the right eye and right wrist
-            EyeY = landmarks(EyeIndices * 3 - 1);
-            WristY = landmarks(WristIndices * 3 - 1);
-
-            % Onset detection logic: Mark the first frame where the wrist Y-coordinate equals or overpasses the Eye Y-coordinate
-            if isnan(firstOnsetFrame) && i == basketball_onset % Basketball onset reference point, frame of intersection at 0ms (EyeY >= WristY)
-                firstOnsetFrame = i;
+            %% Settings for video
+            if cond == 1 % hit
+                videoFile = ['hoop_hit_', participant,'.mp4'];
+            elseif cond == 2 % miss
+                videoFile = ['hoop_miss_', participant,'.mp4'];
+            elseif cond == 3 % none
+                videoFile = ['hoop_', participant,'.mp4'];
             end
 
-            % Plot PLD movement transition
-            subplotPLD = subplot(2, 2, [1, 3]);
+            % Set up video writer
+            videoObj = VideoWriter(videoFile, 'MPEG-4');
+            videoObj.FrameRate = 20;  % Adjust the frame rate as needed
+            open(videoObj);
 
-            % Split the data into X, Y, and Z coordinates for each landmark
-            x_coords = landmarks(1:3:end);
-            y_coords = landmarks(2:3:end);
-            z_coords = landmarks(3:3:end);
 
-            % Create a 3D plot of the landmarks for each body part with unique colors
-            s = scatter3(x_coords, y_coords, z_coords, 30, pointColors, 'filled', 'o','MarkerEdgeColor','flat', 'MarkerEdgeColor','k');
-            s.SizeData = 55;
+            % Loop through the frames to create the animation
+            for i = 1 :numFrames %skipFactor :
 
-            % Customize the plot appearance (e.g., title, labels, etc.)
-            title('Pose Landmark Detection', 'Color', "#FF0000", 'FontSize', 12);
-            subtitle([num2str(EEG.times(i)), ' ms'], 'FontWeight','bold', 'FontSize', 11.5);
-            xlabel('X', 'FontSize', 11, 'Color', 'k');
-            ylabel('Y', 'FontSize', 11, 'Color', 'k');
-            zlabel('Z', 'FontSize', 11, 'Color', 'k');
+                landmarks = timeseries_mp(:, i);
 
-            % View with the desired orientation
-            %view(0,-90); % view(3) %for 3D view(0, -90);
-            view(0, -80);  % Side view from the left, with a slight elevation
+                % Extract the Y-coordinates of the right eye and right wrist
+                EyeY = landmarks(EyeIndices * 3 - 1);
+                WristY = landmarks(WristIndices * 3 - 1);
 
-            grid(subplotPLD, 'off');
+                % Onset detection logic: Mark the first frame where the wrist Y-coordinate equals or overpasses the Eye Y-coordinate
+                if isnan(firstOnsetFrame) && i == basketball_onset % Basketball onset reference point, frame of intersection at 0ms (EyeY >= WristY)
+                    firstOnsetFrame = i;
+                end
 
-            % Indices for left and right landmarks (adjusted for MATLAB's 1-based indexing)
-            leftLandmarkIndices = [2, 3, 4, 8, 10, 12, 14, 16, 18, 19, 20, 24, 26, 28, 30, 32, 34];  % Left side landmarks
-            rightLandmarkIndices = [5, 6, 7, 9, 11, 13, 15, 17, 21, 22, 23, 25, 27, 29, 31, 33];  % Right side landmarks
+                % Plot PLD movement transition
+                subplotPLD = subplot(2, 2, [1, 3]);
 
-            % Define colors for left and right
-            leftColor = [0.4660 0.6740 0.1880];  % Color for left part of the body
-            rightColor = [0 0.4470 0.7410];  % Color for right part of the body
+                % Split the data into X, Y, and Z coordinates for each landmark
+                x_coords = landmarks(1:3:end);
+                y_coords = landmarks(2:3:end);
+                z_coords = landmarks(3:3:end);
 
-            % Connect body parts within clusters with lines
-            for b_part = 1:length(clusters)
-                cluster_points = clusters{b_part};
-                for foton = 1:(length(cluster_points) - 1)
-                    idx1 = cluster_points(foton);
-                    idx2 = cluster_points(foton + 1);
+                % Create a 3D plot of the landmarks for each body part with unique colors
+                s = scatter3(x_coords, y_coords, z_coords, 30, pointColors, 'filled', 'o','MarkerEdgeColor','flat', 'MarkerEdgeColor','k');
+                s.SizeData = 55;
 
-                    % Check if the indices are in the left or right sets
-                    if ismember(idx1, leftLandmarkIndices) || ismember(idx2, leftLandmarkIndices)
-                        lineColor = leftColor;  % Assign left color (green) if any index is in left landmarks
-                    elseif ismember(idx1, rightLandmarkIndices) || ismember(idx2, rightLandmarkIndices)
-                        lineColor = rightColor;  % Assign right color (blue) if any index is in right landmarks
-                    else
-                        lineColor = [0, 0, 0];  % Default color (black) for lines connected to the nose or unspecified
+                % Customize the plot appearance (e.g., title, labels, etc.)
+                title('Pose Landmark Detection', 'Color', "#FF0000", 'FontSize', 12);
+                subtitle([num2str(EEG.times(i)), ' ms'], 'FontWeight','bold', 'FontSize', 11.5);
+                xlabel('X', 'FontSize', 11, 'Color', 'k');
+                ylabel('Y', 'FontSize', 11, 'Color', 'k');
+                zlabel('Z', 'FontSize', 11, 'Color', 'k');
+
+                % View with the desired orientation
+                %view(0,-90); % view(3) %for 3D view(0, -90);
+                view(0, -80);  % Side view from the left, with a slight elevation
+
+                grid(subplotPLD, 'off');
+
+                % Indices for left and right landmarks (adjusted for MATLAB's 1-based indexing)
+                leftLandmarkIndices = [2, 3, 4, 8, 10, 12, 14, 16, 18, 19, 20, 24, 26, 28, 30, 32, 34];  % Left side landmarks
+                rightLandmarkIndices = [5, 6, 7, 9, 11, 13, 15, 17, 21, 22, 23, 25, 27, 29, 31, 33];  % Right side landmarks
+
+                % Define colors for left and right
+                leftColor = [0.4660 0.6740 0.1880];  % Color for left part of the body
+                rightColor = [0 0.4470 0.7410];  % Color for right part of the body
+
+                % Connect body parts within clusters with lines
+                for b_part = 1:length(clusters)
+                    cluster_points = clusters{b_part};
+                    for foton = 1:(length(cluster_points) - 1)
+                        idx1 = cluster_points(foton);
+                        idx2 = cluster_points(foton + 1);
+
+                        % Check if the indices are in the left or right sets
+                        if ismember(idx1, leftLandmarkIndices) || ismember(idx2, leftLandmarkIndices)
+                            lineColor = leftColor;  % Assign left color (green) if any index is in left landmarks
+                        elseif ismember(idx1, rightLandmarkIndices) || ismember(idx2, rightLandmarkIndices)
+                            lineColor = rightColor;  % Assign right color (blue) if any index is in right landmarks
+                        else
+                            lineColor = [0, 0, 0];  % Default color (black) for lines connected to the nose or unspecified
+                        end
+
+                        line([x_coords(idx1), x_coords(idx2)],...
+                            [y_coords(idx1), y_coords(idx2)],...
+                            [z_coords(idx1), z_coords(idx2)], 'Color', lineColor, 'Linewidth', 4);
+                    end
+                end
+
+
+                % Draw or update the circle detection around the wrist
+                for idx = 1:length(highlightIndices)
+                    foton = highlightIndices(idx);
+
+                    % Define coordinates for the corners of the shape around the point
+                    if idx == 1  % Square for the eye
+                        squareX = x_coords(foton) + highlightSize_square * [-1.5, 1.5, 1.5, -1.5, -1.5];
+                        squareY = y_coords(foton) + highlightSize_square * [-1.5, -1.5, 1.5, 1.5, -1.5];
+                        squareZ = z_coords(foton) * ones(1, 5);  % Keep the square in the same plane
+                        highlightColor = highlightColorEye;  % Red for the eye
+
+                        % Draw the square using patch
+                        highlightPatch(idx) = patch(squareX, squareY, squareZ, 'FaceColor', 'none', 'EdgeColor', highlightColor, 'LineWidth', 2, 'Linestyle', '-.');
+
+                    else  % Circle for the wrist
+
+                        % Create a set of points that form a circle in 3D
+                        theta = linspace(0, 2*pi, 50); % Number of points can be adjusted for smoothness
+                        circleX = x_coords(foton) + highlightSize_circle* cos(theta);
+                        circleY = y_coords(foton) + highlightSize_circle* sin(theta);
+                        circleZ = z_coords(foton) * ones(size(circleX));  % Keep the circle in the same plane
+                        highlightColor = highlightColorWrist;
+
+                        % Draw the circle using patch
+                        highlightPatch(idx) = patch(circleX, circleY, circleZ, 'FaceColor', 'none', 'EdgeColor', 'k', 'LineWidth', 2, 'Linestyle', '-');
+
                     end
 
-                    line([x_coords(idx1), x_coords(idx2)],...
-                        [y_coords(idx1), y_coords(idx2)],...
-                        [z_coords(idx1), z_coords(idx2)], 'Color', lineColor, 'Linewidth', 4);
-                end
-            end
-
-
-            % Draw or update the circle detection around the wrist
-            for idx = 1:length(highlightIndices)
-                foton = highlightIndices(idx);
-
-                % Define coordinates for the corners of the shape around the point
-                if idx == 1  % Square for the eye
-                    squareX = x_coords(foton) + highlightSize_square * [-1.5, 1.5, 1.5, -1.5, -1.5];
-                    squareY = y_coords(foton) + highlightSize_square * [-1.5, -1.5, 1.5, 1.5, -1.5];
-                    squareZ = z_coords(foton) * ones(1, 5);  % Keep the square in the same plane
-                    highlightColor = highlightColorEye;  % Red for the eye
-
-                    % Draw the square using patch
-                    highlightPatch(idx) = patch(squareX, squareY, squareZ, 'FaceColor', 'none', 'EdgeColor', highlightColor, 'LineWidth', 2, 'Linestyle', '-.');
-
-                else  % Circle for the wrist
-
-                    % Create a set of points that form a circle in 3D
-                    theta = linspace(0, 2*pi, 50); % Number of points can be adjusted for smoothness
-                    circleX = x_coords(foton) + highlightSize_circle* cos(theta);
-                    circleY = y_coords(foton) + highlightSize_circle* sin(theta);
-                    circleZ = z_coords(foton) * ones(size(circleX));  % Keep the circle in the same plane
-                    highlightColor = highlightColorWrist;
-
-                    % Draw the circle using patch
-                    highlightPatch(idx) = patch(circleX, circleY, circleZ, 'FaceColor', 'none', 'EdgeColor', 'k', 'LineWidth', 2, 'Linestyle', '-');
-
                 end
 
-            end
+
+                % Add legend outside the loop
+                if exist('highlightPatch', 'var')
+                    legend(highlightPatch, highlightLabels, 'Location', 'none', 'FontSize', 10, 'Position', [0.356770833333334,0.141898405635892,0.061718749348074,0.040600666347415]);
+                end
 
 
-            % Add legend outside the loop
-            if exist('highlightPatch', 'var')
-                legend(highlightPatch, highlightLabels, 'Location', 'none', 'FontSize', 10, 'Position', [0.356770833333334,0.141898405635892,0.061718749348074,0.040600666347415]);
-            end
+                % If the current frame is the onset frame, add a horizontal line
+                if i == firstOnsetFrame
+                    % Get the range of x coordinates for the line
+                    xRange = xlim(subplotPLD);
+                    xExtendedRange = [xRange(1) - 0.2, xRange(2) + 0.2];  % Extend the range a bit on both sides
+
+                    % Plot the line indicating the onset
+                    line(xExtendedRange, [EyeY, EyeY], 'Color', 'k', 'LineWidth', 2, 'LineStyle', ':');
+                    legend('Onset', 'Location', 'southeast', 'FontSize', 10);
+                end
 
 
-            % If the current frame is the onset frame, add a horizontal line
-            if i == firstOnsetFrame
-                % Get the range of x coordinates for the line
-                xRange = xlim(subplotPLD);
-                xExtendedRange = [xRange(1) - 0.2, xRange(2) + 0.2];  % Extend the range a bit on both sides
+                % If the current frame is the onset frame, add a horizontal line
+                if i == find(EEG.times == 0)
+                    % Get the range of x coordinates for the line
+                    xRange = xlim(subplotPLD);
+                    xExtendedRange = [xRange(1) - 0.2, xRange(2) + 0.2];  % Extend the range a bit on both sides
 
-                % Plot the line indicating the onset
-                line(xExtendedRange, [EyeY, EyeY], 'Color', 'k', 'LineWidth', 2, 'LineStyle', ':');
-                legend('Onset', 'Location', 'southeast', 'FontSize', 10);
-            end
-
-
-            % If the current frame is the onset frame, add a horizontal line
-            if i == find(EEG.times == 0)
-                % Get the range of x coordinates for the line
-                xRange = xlim(subplotPLD);
-                xExtendedRange = [xRange(1) - 0.2, xRange(2) + 0.2];  % Extend the range a bit on both sides
-
-                % Plot the line indicating the onset
-                line(xExtendedRange, [WristY, WristY], 'Color', 'r', 'LineWidth', 2, 'LineStyle', '--');
-                %legend('Onset', 'Location', 'southeast', 'FontSize', 9);
-            end
-
-
-
-            % Set axis limits for consistent scaling
-            axis('equal');
-
-
-            %axis(subplotPLD, 'off'); % This turns off the axis lines, ticks, and background
-            set(get(subplotPLD, 'XLabel'), 'Visible', 'on'); % Make the X-axis label visible
-            set(get(subplotPLD, 'YLabel'), 'Visible', 'on'); % Make the Y-axis label visible
-            set(get(subplotPLD, 'ZLabel'), 'Visible', 'on'); % Make the Z-axis label visible
-
-            % After plotting data and setting axis off
-            xlabelHandle = get(subplotPLD, 'XLabel');
-            ylabelHandle = get(subplotPLD, 'YLabel');
-            zlabelHandle = get(subplotPLD, 'ZLabel');
-
-            % Adjust label positions
-            % Note: you will need to adjust these values based on your specific plot and requirements
-            set(xlabelHandle, 'Position', get(xlabelHandle, 'Position') + [0.3, 0, 0.3]);
-            set(ylabelHandle, 'Position', get(ylabelHandle, 'Position') + [-0.1, -0.1, 0]);
-            set(zlabelHandle, 'Position', get(zlabelHandle, 'Position') + [0, 0, 1]);
-
-            % Then manually add text objects at the desired label positions
-            xlabelPos = get(get(subplotPLD, 'XLabel'), 'Position'); % Get current label position
-            ylabelPos = get(get(subplotPLD, 'YLabel'), 'Position'); % Get current label position
-            zlabelPos = get(get(subplotPLD, 'ZLabel'), 'Position'); % Get current label position
-
-            % % Now, add the text objects
-            % text(xlabelPos(1), xlabelPos(2), xlabelPos(3), 'X', 'HorizontalAlignment', 'center', 'VerticalAlignment', 'top', 'Color', 'k');
-            % text(ylabelPos(1), ylabelPos(2), ylabelPos(3), 'Y', 'HorizontalAlignment', 'right', 'VerticalAlignment', 'middle', 'Color', 'k');
-            % text(zlabelPos(1), zlabelPos(2), zlabelPos(3), 'Z', 'HorizontalAlignment', 'left', 'VerticalAlignment', 'middle', 'Color', 'k');
-
-            % Make the axes lines transparent
-            set(subplotPLD, 'XColor', 'none', 'YColor', 'none', 'ZColor', 'none');
-
-            % After plotting the data for the current frame, set the manual axis limits
-            % xlim(subplotPLD, xLimManual);
-            % ylim(subplotPLD, yLimManual);
-            % zlim(subplotPLD, zLimManual);
-
-            % Plot topography
-            % subtightplot(2, 2, 2);
-            % pop_topoplot(EEG, 1, EEG.times(i), '', [], 0, 'electrodes', 'off', 'maplimits', [-20 20], ...
-            %     'whitebk', 'on', ...
-            %     'shading', 'interp');
-            % ylabel('Amplitude [\muV]', 'FontSize', 10);
-            % colormap(jet(250));
-
-
-            subplotTopo = subtightplot(2, 2, 2);
-            topoplot(ERP(:, i), EEG.chanlocs, 'electrodes', 'off', 'maplimits', [-20 20], ...
-                'whitebk', 'on', ...
-                'shading', 'interp');
-            %title([num2str(EEG.times(i)), ' [ms]'], 'FontSize', 10, 'VerticalAlignment', 'baseline');
-            colormap(jet(250));
+                    % Plot the line indicating the onset
+                    line(xExtendedRange, [WristY, WristY], 'Color', 'r', 'LineWidth', 2, 'LineStyle', '--');
+                    %legend('Onset', 'Location', 'southeast', 'FontSize', 9);
+                end
 
 
 
-            % Title adjusted
-            axesPosition = get(subplotTopo, 'Position');  % Get the position of the current axes
-            normalizedBottom = axesPosition(2);  % Bottom of the axes in normalized units
-
-            % Position the text at the bottom center of each subplot
-            text('Parent', subplotTopo, 'String', [num2str(EEG.times(i)), ' ms'], ...
-                'Units', 'normalized', ...
-                'Position', [0.5, normalizedBottom + 0.45, 0], ... % You may need to adjust the 0.1 offset
-                'HorizontalAlignment', 'center', ...
-                'VerticalAlignment', 'top', ... % 'top' aligns the text at its top to the given Y position
-                'FontSize', 11.5, 'FontWeight', 'bold');  % Adjust font size as needed
+                % Set axis limits for consistent scaling
+                axis('equal');
 
 
-            % % Plot EEG waveform
-            subtitle(subplotERP, [num2str(EEG.times(i)), ' ms'], 'FontWeight', 'bold', 'FontSize', 11.5);
+                %axis(subplotPLD, 'off'); % This turns off the axis lines, ticks, and background
+                set(get(subplotPLD, 'XLabel'), 'Visible', 'on'); % Make the X-axis label visible
+                set(get(subplotPLD, 'YLabel'), 'Visible', 'on'); % Make the Y-axis label visible
+                set(get(subplotPLD, 'ZLabel'), 'Visible', 'on'); % Make the Z-axis label visible
 
-            % Update the XData property of the vertical line to move it forward
-            set(currentPointLine, 'XData', [EEG.times(i), EEG.times(i)]);
+                % After plotting data and setting axis off
+                xlabelHandle = get(subplotPLD, 'XLabel');
+                ylabelHandle = get(subplotPLD, 'YLabel');
+                zlabelHandle = get(subplotPLD, 'ZLabel');
+
+                % Adjust label positions
+                % Note: you will need to adjust these values based on your specific plot and requirements
+                set(xlabelHandle, 'Position', get(xlabelHandle, 'Position') + [0.3, 0, 0.3]);
+                set(ylabelHandle, 'Position', get(ylabelHandle, 'Position') + [-0.1, -0.1, 0]);
+                set(zlabelHandle, 'Position', get(zlabelHandle, 'Position') + [0, 0, 1]);
+
+                % Then manually add text objects at the desired label positions
+                xlabelPos = get(get(subplotPLD, 'XLabel'), 'Position'); % Get current label position
+                ylabelPos = get(get(subplotPLD, 'YLabel'), 'Position'); % Get current label position
+                zlabelPos = get(get(subplotPLD, 'ZLabel'), 'Position'); % Get current label position
+
+                % % Now, add the text objects
+                % text(xlabelPos(1), xlabelPos(2), xlabelPos(3), 'X', 'HorizontalAlignment', 'center', 'VerticalAlignment', 'top', 'Color', 'k');
+                % text(ylabelPos(1), ylabelPos(2), ylabelPos(3), 'Y', 'HorizontalAlignment', 'right', 'VerticalAlignment', 'middle', 'Color', 'k');
+                % text(zlabelPos(1), zlabelPos(2), zlabelPos(3), 'Z', 'HorizontalAlignment', 'left', 'VerticalAlignment', 'middle', 'Color', 'k');
+
+                % Make the axes lines transparent
+                set(subplotPLD, 'XColor', 'none', 'YColor', 'none', 'ZColor', 'none');
+
+                % After plotting the data for the current frame, set the manual axis limits
+                % xlim(subplotPLD, xLimManual);
+                % ylim(subplotPLD, yLimManual);
+                % zlim(subplotPLD, zLimManual);
+
+                % Plot topography
+                % subtightplot(2, 2, 2);
+                % pop_topoplot(EEG, 1, EEG.times(i), '', [], 0, 'electrodes', 'off', 'maplimits', [-20 20], ...
+                %     'whitebk', 'on', ...
+                %     'shading', 'interp');
+                % ylabel('Amplitude [\muV]', 'FontSize', 10);
+                % colormap(jet(250));
+
+
+                subplotTopo = subtightplot(2, 2, 2);
+                topoplot(ERP(:, i), EEG.chanlocs, 'electrodes', 'off', 'maplimits', [-20 20], ...
+                    'whitebk', 'on', ...
+                    'shading', 'interp');
+                %title([num2str(EEG.times(i)), ' [ms]'], 'FontSize', 10, 'VerticalAlignment', 'baseline');
+                colormap(jet(250));
 
 
 
-            if cond == 1
-                sgtitle(['Average Motion: Hits / Sub. [', num2str(sub), ']'], 'Color',"k", 'Fontweight', 'bold'); % Super title
-            elseif cond ==2
-                sgtitle(['Average Motion: Misses / Sub. [', num2str(sub), ']'], 'Color',"k", 'Fontweight', 'bold'); % Super title
-            elseif cond == 3
-                sgtitle(['Average Motion / Sub. [', num2str(sub), ']'], 'Color',"k", 'Fontweight', 'bold'); % Super title
-            end
+                % Title adjusted
+                axesPosition = get(subplotTopo, 'Position');  % Get the position of the current axes
+                normalizedBottom = axesPosition(2);  % Bottom of the axes in normalized units
+
+                % Position the text at the bottom center of each subplot
+                text('Parent', subplotTopo, 'String', [num2str(EEG.times(i)), ' ms'], ...
+                    'Units', 'normalized', ...
+                    'Position', [0.5, normalizedBottom + 0.45, 0], ... % You may need to adjust the 0.1 offset
+                    'HorizontalAlignment', 'center', ...
+                    'VerticalAlignment', 'top', ... % 'top' aligns the text at its top to the given Y position
+                    'FontSize', 11.5, 'FontWeight', 'bold');  % Adjust font size as needed
+
+
+                % % Plot EEG waveform
+                subtitle(subplotERP, [num2str(EEG.times(i)), ' ms'], 'FontWeight', 'bold', 'FontSize', 11.5);
+
+                % Update the XData property of the vertical line to move it forward
+                set(currentPointLine, 'XData', [EEG.times(i), EEG.times(i)]);
 
 
 
-            % Save the frame as an image in the RP peak
-            if i == (find(EEG.times==-896))  % A couple of frames before Peak ERP index
+                if cond == 1
+                    sgtitle(['Average Motion: Hits / Sub. [', num2str(sub), ']'], 'Color',"k", 'Fontweight', 'bold'); % Super title
+                elseif cond ==2
+                    sgtitle(['Average Motion: Misses / Sub. [', num2str(sub), ']'], 'Color',"k", 'Fontweight', 'bold'); % Super title
+                elseif cond == 3
+                    sgtitle(['Average Motion / Sub. [', num2str(sub), ']'], 'Color',"k", 'Fontweight', 'bold'); % Super title
+                end
 
-                if cond == 1 % hit
-                    saveas(gcf, [out_subfold, 'Mind_hoops_hit_BP_', participant, '.png']); % Save the figure as a PNG image
-                    saveas(gcf, [outpath, '\\group_analysis\\','Mind_hoops_hit_BP_', participant, '.png']); % Save the figure as a PNG image
 
-                elseif cond == 2 % miss
-                    saveas(gcf, [out_subfold, 'Mind_hoops_miss_BP_', participant, '.png']); % Save the figure as a PNG image
-                    saveas(gcf, [outpath, '\\group_analysis\\','Mind_hoops_miss_BP_', participant, '.png']); % Save the figure as a PNG image
 
-                elseif cond == 3 % all
-                    saveas(gcf, [out_subfold, 'Mind_hoops_BP_', participant, '.png']); % Save the figure as a PNG image
-                    saveas(gcf, [outpath, '\\group_analysis\\','Mind_hoops_BP_', participant, '.png']); % Save the figure as a PNG image
+                % Save the frame as an image in the RP peak
+                if i == (find(EEG.times==-896))  % A couple of frames before Peak ERP index
 
-                    savefig(gcf, ['Mind_hoops_BP_', participant, '.fig'])
+                    if cond == 1 % hit
+                        saveas(gcf, [out_subfold, 'Mind_hoops_hit_BP_', participant, '.png']); % Save the figure as a PNG image
+                        saveas(gcf, [outpath, '\\group_analysis\\','Mind_hoops_hit_BP_', participant, '.png']); % Save the figure as a PNG image
+
+                    elseif cond == 2 % miss
+                        saveas(gcf, [out_subfold, 'Mind_hoops_miss_BP_', participant, '.png']); % Save the figure as a PNG image
+                        saveas(gcf, [outpath, '\\group_analysis\\','Mind_hoops_miss_BP_', participant, '.png']); % Save the figure as a PNG image
+
+                    elseif cond == 3 % all
+                        saveas(gcf, [out_subfold, 'Mind_hoops_BP_', participant, '.png']); % Save the figure as a PNG image
+                        saveas(gcf, [outpath, '\\group_analysis\\','Mind_hoops_BP_', participant, '.png']); % Save the figure as a PNG image
+
+                        savefig(gcf, ['Mind_hoops_BP_', participant, '.fig'])
+
+                    end
 
                 end
 
-            end
 
+                % Save the frame as an image in the RP peak
+                if i == (find(EEG.times==0))  % A couple of frames before Peak ERP index
 
-            % Save the frame as an image in the RP peak
-            if i == (find(EEG.times==0))  % A couple of frames before Peak ERP index
+                    if cond == 1 % hit
+                        saveas(gcf, [out_subfold, 'Mind_hoops_hit_0_', participant, '.png']); % Save the figure as a PNG image
+                        saveas(gcf, [outpath, '\\group_analysis\\','Mind_hoops_hit_0_', participant, '.png']); % Save the figure as a PNG image
 
-                if cond == 1 % hit
-                    saveas(gcf, [out_subfold, 'Mind_hoops_hit_0_', participant, '.png']); % Save the figure as a PNG image
-                    saveas(gcf, [outpath, '\\group_analysis\\','Mind_hoops_hit_0_', participant, '.png']); % Save the figure as a PNG image
+                    elseif cond == 2 % miss
+                        saveas(gcf, [out_subfold, 'Mind_hoops_miss_onset_0_', participant, '.png']); % Save the figure as a PNG image
+                        saveas(gcf, [outpath, '\\group_analysis\\','Mind_hoops_miss_0_', participant, '.png']); % Save the figure as a PNG image
 
-                elseif cond == 2 % miss
-                    saveas(gcf, [out_subfold, 'Mind_hoops_miss_onset_0_', participant, '.png']); % Save the figure as a PNG image
-                    saveas(gcf, [outpath, '\\group_analysis\\','Mind_hoops_miss_0_', participant, '.png']); % Save the figure as a PNG image
+                    elseif cond == 3 % all
+                        saveas(gcf, [out_subfold, 'Mind_hoops_onset_0_', participant, '.png']); % Save the figure as a PNG image
+                        saveas(gcf, [outpath, '\\group_analysis\\','Mind_hoops_0_', participant, '.png']); % Save the figure as a PNG image
 
-                elseif cond == 3 % all
-                    saveas(gcf, [out_subfold, 'Mind_hoops_onset_0_', participant, '.png']); % Save the figure as a PNG image
-                    saveas(gcf, [outpath, '\\group_analysis\\','Mind_hoops_0_', participant, '.png']); % Save the figure as a PNG image
+                    end
 
                 end
 
+
+                % Capture frame
+                frame = getframe(gcf);
+                writeVideo(videoObj, frame);
+
+
+                % Clear the figure to avoid overlap
+                cla(subplotPLD);
+                cla(subplotTopo);
+                % cla(subplot(2, 2, 4));
+
+
             end
 
-
-            % Capture frame
-            frame = getframe(gcf);
-            writeVideo(videoObj, frame);
-
-
-            % Clear the figure to avoid overlap
-            cla(subplotPLD);
-            cla(subplotTopo);
-            % cla(subplot(2, 2, 4));
+            % Close the video writer
+            close(videoObj);
 
 
         end
-
-        % Close the video writer
-        close(videoObj);
 
         ID{sub} = participant; % Assigning ID's
 
