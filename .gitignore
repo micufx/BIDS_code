@@ -1,0 +1,4 @@
+*.asv
+
+# ignore data files
+data/raw/*
