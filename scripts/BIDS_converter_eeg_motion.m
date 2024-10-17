@@ -10,6 +10,7 @@ outpath = 'C:\Users\koes4731\Desktop\Thesis\data_hoops\'; % BIDS output path
 files = dir(fullfile(path, '\*.xdf')); % listing datasets
 
 ft_defaults; % Fieldtrip defaults
+% some about the version
 
 %% Set general BIDS conversion configuration
 
