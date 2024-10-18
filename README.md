@@ -19,6 +19,8 @@ Each script in the `scripts` directory accesses files from the `data` directory.
 - xdfimport extension for eeglab
 - dipfit extension for eeglab
 
+**NOTE:**: The `fieldtrip` and `eeglab` directories have to be located on the top level directory to be added to the MATLAB path automatically.
+
 ## Running the Scripts
 
 1. Open MATLAB.
