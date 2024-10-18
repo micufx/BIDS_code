@@ -60,7 +60,7 @@ for sub = 1:1%length(files)
     % Import EEG, add channel locations, and add events
     EEG = pop_loadxdf(fullfile(dir_data,'raw', files(sub).name), 'streamtype', 'EEG', 'exclude_markerstreams', {});
     EEG = pop_chanedit(EEG, 'lookup', dir_chanslocs); % Add channel info
-    EEG.event = events; % Add events
+    EEG.event = all_events; % Add events
     EEG = eeg_checkset(EEG, 'eventconsistency'); % Check event consistency
 
     % Channel labels and electrode info
