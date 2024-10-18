@@ -20,6 +20,8 @@ files = dir(fullfile(dir_data, 'raw\*.xdf')); % listing datasets
 ft_defaults; % Fieldtrip defaults
 % some about the version
 
+[ALLEEG EEG CURRENTSET ALLCOM] = eeglab; % Open eeglab
+
 %% Set general BIDS conversion configuration
 
 cfg = [];
@@ -31,7 +33,7 @@ cfg.bidsroot = './data/bids';  % write to the present working directory
 
 %% Loop over datasets
 
-for sub = 1:1%length(files)
+for sub = 1: length(files)
 
     participant = extractBefore(files(sub).name, '.xdf');  % get subject name
     data = load_xdf(fullfile(dir_data,'raw', files(sub).name)); % Saving the data in a variable
@@ -40,10 +42,39 @@ for sub = 1:1%length(files)
 
     %% Extract EEG and motion data from XDF file
     for i = 1:length(data)
+
         currentName = data{1, i}.info.name;
+        
+         % Check if the current data is MP
         if contains(currentName, 'Pose', 'IgnoreCase', true)
             mp = data{1, i}; % Pose (motion) data
         end
+
+        % Check if the current data is ACC
+        if strcmp(currentName, 'Movella DOT B1')
+            acc = i;
+        end
+
+        % Check if the current data is ACC
+        if strcmp(currentName, 'Movella DOT B2')
+            acc = i;
+        end
+
+        % Check if the current data is ACC
+        if strcmp(currentName, 'Movella DOT B3')
+            acc = i;
+        end
+
+        % Check if the current data is ACC
+        if strcmp(currentName, 'Movella DOT B4')
+            acc = i;
+        end
+
+        % Check if the current data is ACC
+        if strcmp(currentName, 'Movella DOT B5')
+            acc = i;
+        end
+
     end
 
     %% Modality agnostic info
@@ -89,7 +120,6 @@ for sub = 1:1%length(files)
     cfg.coordsystem.EEGCoordinateSystem = "CTF";
     cfg.coordsystem.EEGCoordinateUnits = "mm";
     
-
 
     % Generate README file
     README = sprintf('The experiment included 27 participants. \n- Miguel Contreras-Altamirano (December, 2024)');
@@ -158,7 +188,6 @@ for sub = 1:1%length(files)
     cfg.channels.units = cellstr(repmat('m',length(mocap.label),1));
 
     mocap = ft_datatype_raw(mocap);
-
 
     data2bids(cfg, mocap);
 
