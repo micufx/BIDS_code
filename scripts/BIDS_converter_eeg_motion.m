@@ -33,7 +33,7 @@ cfg.bidsroot = './data/bids';  % write to the present working directory
 
 %% Loop over datasets
 
-for sub = 1: length(files)
+for sub = 1: 1%length(files)
 
     participant = extractBefore(files(sub).name, '.xdf');  % get subject name
     data = load_xdf(fullfile(dir_data,'raw', files(sub).name)); % Saving the data in a variable
@@ -41,7 +41,7 @@ for sub = 1: length(files)
 
 
     %% Extract EEG and motion data from XDF file
-    for i = 1:length(data)
+    for i = 1: length(data)
 
         currentName = data{1, i}.info.name;
         
@@ -52,27 +52,27 @@ for sub = 1: length(files)
 
         % Check if the current data is ACC
         if strcmp(currentName, 'Movella DOT B1')
-            acc = i;
+            acc = data{1, i};
         end
 
         % Check if the current data is ACC
         if strcmp(currentName, 'Movella DOT B2')
-            acc = i;
+            acc = data{1, i};
         end
 
         % Check if the current data is ACC
         if strcmp(currentName, 'Movella DOT B3')
-            acc = i;
+            acc = data{1, i};
         end
 
         % Check if the current data is ACC
         if strcmp(currentName, 'Movella DOT B4')
-            acc = i;
+            acc = data{1, i};
         end
 
         % Check if the current data is ACC
         if strcmp(currentName, 'Movella DOT B5')
-            acc = i;
+            acc = data{1, i};
         end
 
     end
@@ -174,7 +174,7 @@ for sub = 1: length(files)
     cfg.sub = extractAfter(participant, 'sub_');
     cfg.datatype = 'motion';
     cfg.task = 'Freethrow';
-    cfg.bidsroot = './data/bids'
+    cfg.bidsroot = './data/bids';
     cfg.tracksys = 'MediaPipe';
     cfg.motion.TrackingSystemName = 'MediaPipe';
     cfg.motion.samplingrate = sampling_rate_mp;
@@ -186,6 +186,39 @@ for sub = 1: length(files)
     cfg.channels.type = cellstr(repmat('POS',length(mocap.label),1));
     cfg.channels.tracked_point = mocap.label;
     cfg.channels.units = cellstr(repmat('m',length(mocap.label),1));
+
+    mocap = ft_datatype_raw(mocap);
+
+    data2bids(cfg, mocap);
+
+
+    %% Accelerometer Data Conversion
+
+    % Prepare motion data structure
+    mocap.trial{1} = [acc.time_series];
+    mocap.time{1} = acc.time_stamps;
+    mocap.label = {
+        'acc_hand_X', 'acc_hand_Y', 'acc_hand_Z', ...
+        'gyro_hand_X', 'gyro_hand_Y', 'gyro_hand_Z', ...
+        };
+
+    % BIDS motion data settings
+    cfg = [];
+    cfg.sub = extractAfter(participant, 'sub_');
+    cfg.datatype = 'motion';
+    cfg.task = 'Freethrow';
+    cfg.bidsroot = './data/bids';
+    cfg.tracksys = 'Movella DOT';
+    cfg.motion.TrackingSystemName = 'Movella DOT';
+    cfg.motion.samplingrate = sampling_rate_acc;
+
+    % specify channel details, this overrides the details in the original data structure
+    cfg.channels = [];
+    cfg.channels.name = mocap.label;
+    cfg.channels.component = cellstr(repmat({'acc_x','acc_y','acc_z', 'gyro_x','gyro_y','gyro_z'},1, length(mocap.label)/3));
+    cfg.channels.type = cellstr(repmat({'ACCEL''GYRO'},length(mocap.label),1));
+    cfg.channels.tracked_point = mocap.label;
+    cfg.channels.units = cellstr(repmat('m s−2',length(mocap.label),1));
 
     mocap = ft_datatype_raw(mocap);
 
