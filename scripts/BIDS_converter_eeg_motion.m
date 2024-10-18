@@ -3,7 +3,7 @@ clc; clear; close all;
 
 % Get the full path of the current script
 scriptPath = fileparts(mfilename('fullpath'));
-proj_dir = fullfile(scriptPath, '..')
+proj_dir = fullfile(scriptPath, '..');
 proj_dir = char(java.io.File(proj_dir).getCanonicalPath); % Convert to canonical absolute path
 
 % Change to the parent directory of the script
@@ -35,7 +35,7 @@ for sub = 1:1%length(files)
 
     participant = extractBefore(files(sub).name, '.xdf');  % get subject name
     data = load_xdf(fullfile(dir_data,'raw', files(sub).name)); % Saving the data in a variable
-    load((fullfile(dir_data,'raw', ['events_', participant,'.mat']))); % Loading events file
+    load((fullfile(dir_data,'raw', ['events_all_', participant,'.mat']))); % Loading events file
 
 
     %% Extract EEG and motion data from XDF file
@@ -60,7 +60,7 @@ for sub = 1:1%length(files)
     % Import EEG, add channel locations, and add events
     EEG = pop_loadxdf(fullfile(dir_data,'raw', files(sub).name), 'streamtype', 'EEG', 'exclude_markerstreams', {});
     EEG = pop_chanedit(EEG, 'lookup', dir_chanslocs); % Add channel info
-    EEG.event = events; % Add events
+    EEG.event = all_events; % Add events
     EEG = eeg_checkset(EEG, 'eventconsistency'); % Check event consistency
 
     % Channel labels and electrode info

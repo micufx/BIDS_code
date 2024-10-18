@@ -13,13 +13,13 @@ num_conditions = 3; % (Conditions and overall: 1=hit 2=miss 3=all)
 
 %% Selecting participant
 
-for sub = 1 : 1%length(files)
+for sub = 1 : length(files)
 
     participant = extractBefore(files(sub).name, '.xdf');
     out_subfold = [outpath, participant, '\\'];
     load([outpath, 'Info_EEG.mat']); % Loading channels file
 
-    for cond=3 : num_conditions
+    for cond=1 : num_conditions
 
         if cond == 1 % 'hit'
 
@@ -308,13 +308,18 @@ for sub = 1 : 1%length(files)
         %     [upper_bound_rev' fliplr(lower_bound_rev')], ...
         %     'k', 'FaceAlpha', 0.05, 'EdgeColor', 'none');
 
-        % Movement onset
-        accOnset_rev = line(ax2, [avgOnsetTime_rev avgOnsetTime_rev], [0, max(timeseries_acc_mag)], 'Color', 'black', 'LineStyle', ':', 'LineWidth', 2);    % [accMin, accMax]
-        
         % Basketball onset
+        accOnset_rev = line(ax2, [avgOnsetTime_rev avgOnsetTime_rev], [0, accMax], 'Color', 'black', 'LineStyle', ':', 'LineWidth', 2);    % [accMin, accMax]
+
+        % Add a label to the line Basketball onset (apply a vertical offset)
+        text(ax2, avgOnsetTime_rev, accMax - 2, 'MP', 'Color', 'k', 'FontSize', 10, 'HorizontalAlignment', 'right', 'VerticalAlignment', 'top', 'Rotation', 90, 'FontWeight', 'bold');  % Adjust the 'accMax - 10' to position the label
+
+        % Movement onset
         currentPointLine_3 = line(subplotERP, [EEG.times(movement_onset), EEG.times(movement_onset)], yLimits, 'Color', 'red', 'LineWidth', 2, 'Linestyle', '--');
 
-        
+        % Add a label to the line movement onset (apply a vertical offset)
+        text(ax2, EEG.times(movement_onset), accMax - 2, 'ACC', 'Color', 'r', 'FontSize', 10, 'HorizontalAlignment', 'right', 'VerticalAlignment', 'top', 'Rotation', 90, 'FontWeight', 'bold');  % Adjust the 'accMax - 20' to position the label
+
         % Add a label to the line
         %text(ax2, avgOnsetTime_rev, accMax-9, 'Rev', 'Color', 'k', 'FontSize', 10, 'HorizontalAlignment', 'right', 'VerticalAlignment', 'middle', 'Rotation', 90, 'FontWeight','bold');
 
@@ -540,7 +545,7 @@ for sub = 1 : 1%length(files)
                 %legend('Onset', 'Location', 'southeast', 'FontSize', 9);
             end
 
-           
+
             % If the current frame is the onset frame, add a horizontal line
             if timePLD == basketball_onset
                 % Get the range of x coordinates for the line
