@@ -215,7 +215,7 @@ for sub = 1 : length(files)
 
         % Set y-axis limits to better visualize the data
         %ylim([min(timeseries_acc(1,:)), max(timeseries_acc(3,:))]);
-        ylim([0 100]); % % mx_peak_acc= 174.6862 for sub_01 which is the highest, therefore I set the same scale to compare with the others
+        ylim([0 100]); % 
 
         hold off; % Release hold
 
@@ -252,13 +252,6 @@ for sub = 1 : length(files)
                 epochs(:, :, i) = timeseries_acc(:, start_sample:end_sample);
             end
         end
-
-
-        % Apply median filter to each epoch
-        % for i = 1:num_events
-        %     epochs(:, i) = medfilt1(epochs(:, i), 5); % 5 is the window size, adjust as needed
-        % end
-
 
         % Calculate the average across epochs
         average_epoch = mean(epochs, 3, 'omitnan');
@@ -438,13 +431,6 @@ for sub = 1 : length(files)
         line([avgOnsetTime_rev, avgOnsetTime_rev], ylim, 'Color', 'red', 'LineStyle', '--', 'LineWidth', 2.5);
 
 
-        % % Calculate the average onset time
-        % avgOnsetTime_movement = mean([new_events.time]) / -1000;
-        %
-        % % Plot a vertical line at the average onset time
-        % line([avgOnsetTime_movement, avgOnsetTime_movement], ylim, 'Color', 'b', 'LineStyle', '--', 'LineWidth', 3);
-
-
         % Displaying label condition
 
         if cond == 1 % 'hit'
@@ -483,11 +469,6 @@ for sub = 1 : length(files)
             'timestamps_acc', 'timeseries_acc',...
             'markers_time_acc', 'markers_sample_acc');
 
-            % % Save the figure as a PNG image
-            % saveas(acc_fig_rev, [out_subfold, 'ACC_fig_rev_hit_', participant, '.png']);
-            % saveas(acc_fig_rev, [outpath, '\\group_analysis\\','ACC_fig_rev_hit_', participant, '.png']); % Save the figure as a PNG image
-
-
         elseif cond == 2 % 'miss'
 
             % Save it in .mat file
@@ -497,22 +478,13 @@ for sub = 1 : length(files)
             'markers_time_acc', 'markers_sample_acc');
 
 
-            % % Save the figure as a PNG image
-            % saveas(acc_fig_rev, [out_subfold, 'ACC_fig_rev_miss_', participant, '.png']);
-            % saveas(acc_fig_rev, [outpath, '\\group_analysis\\','ACC_fig_rev_miss_', participant, '.png']); % Save the figure as a PNG image
-
-
-        elseif cond == 3  % % 'none'
+       elseif cond == 3  % % 'none'
 
             % Save it in .mat file
             save([out_subfold, 'ACC_rev_', participant,'.mat'], 'avgAccMagnitude_rev', 'epochTimes_rev', 'sampling_rate_acc', ...
             'epochs_accMagnitude_rev', 'baselineStd', 'upper_bound_rev', 'lower_bound_rev', 'avgOnsetTime_rev', 'RC_onsets',...
             'timestamps_acc', 'timeseries_acc',...
             'markers_time_acc', 'markers_sample_acc');
-
-            % % Save the figure as a PNG image
-            % saveas(acc_fig_rev, [out_subfold, 'ACC_fig_rev_', participant, '.png']);
-            % saveas(acc_fig_rev, [outpath, '\\group_analysis\\','ACC_fig_rev_', participant, '.png']);
 
         end
 

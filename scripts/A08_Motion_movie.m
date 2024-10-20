@@ -9,7 +9,6 @@ files = dir( fullfile( path,'\*.xdf')); % listing data sets
 
 num_conditions = 3; % (Conditions and overall: 1=hit 2=miss 3=all)
 
-
 % Ask the user if they want to create a video
 create_video = input('Do you want to create a video for the analysis? (yes/no): ', 's');
 create_video = lower(create_video);  % Normalize input
@@ -147,10 +146,6 @@ for sub = 1 : length(files)
             onsetTimes = onsetTimes;
             onsetFrames =onsetFrames;
         end
-
-
-        % Shooting percentage accuracy
-        shoot_per = (length(hitOnsets) * 100 ) / (length(onsetTimes));
 
 
         %% Fixing inconsistent frame lengths
@@ -308,7 +303,7 @@ for sub = 1 : length(files)
         % globalMin = min(min(EEG.data(:)));  % Min across all channels and all times
 
         % Define your y-limits
-        yLimits = [-30, 30];
+        yLimits = [-35, 30];
         ylim(yLimits);
 
         % Process the data to mask values outside the y-limits
@@ -438,15 +433,16 @@ for sub = 1 : length(files)
 
         % Plot the movement onset
         accOnset_rev = line(ax2, [avgOnsetTime_rev avgOnsetTime_rev], [0, accMax], 'Color', 'black', 'LineStyle', ':', 'LineWidth', 2);   % [accMin, accMax]
+        
+        % Add a label to the line movement onset
+        text(avgOnsetTime_rev, accMax, 'MP', 'Color', 'k', 'FontSize', 10, 'HorizontalAlignment', 'right', 'VerticalAlignment', 'top', 'Rotation', 90, 'FontWeight', 'bold');
 
         % Adding line of the Basketball onset
         currentPointLine_PLD_onset = line(subplotERP, [0, 0], yLimits, 'Color', 'r', 'LineWidth', 2, 'Linestyle', '--');
-
+        
         % Add a label to the line basketball onset
-        text(ax2, currentPointLine_PLD_onset, accMax, 'ACC', 'Color', 'r', 'FontSize', 10, 'HorizontalAlignment', 'right', 'VerticalAlignment', 'top', 'Rotation', 90, 'FontWeight','bold');
+        text(0, accMax, 'ACC', 'Color', 'r', 'FontSize', 10, 'HorizontalAlignment', 'right', 'VerticalAlignment', 'top', 'Rotation', 90, 'FontWeight', 'bold');
 
-        % Add a label to the line movement onset
-        text(ax2, avgOnsetTime_rev, accMax, 'MP', 'Color', 'k', 'FontSize', 10, 'HorizontalAlignment', 'right', 'VerticalAlignment', 'top', 'Rotation', 90, 'FontWeight','bold');
 
         % % Plot the onset marker off the Derivative Method
         % accOnset_dev = line(ax2, [onsetTime_acc_dev onsetTime_acc_dev], [accMin, accMax], 'Color', "#D95319", 'LineStyle', '--', 'LineWidth', 2.5);
@@ -485,7 +481,7 @@ for sub = 1 : length(files)
         %% Settings for video - Video Generation Part
         if create_video_flag  % Only run this if the user chose to create a video
 
-            %% Settings for video
+            % Settings for video
             if cond == 1 % hit
                 videoFile = ['hoop_hit_', participant,'.mp4'];
             elseif cond == 2 % miss
@@ -499,6 +495,7 @@ for sub = 1 : length(files)
             videoObj.FrameRate = 20;  % Adjust the frame rate as needed
             open(videoObj);
 
+         %%
 
             % Loop through the frames to create the animation
             for i = 1 :numFrames %skipFactor :
@@ -720,7 +717,7 @@ for sub = 1 : length(files)
 
 
                 % Save the frame as an image in the RP peak
-                if i == (find(EEG.times==-896))  % A couple of frames before Peak ERP index
+                if i == (find(EEG.times==-200))  % A couple of frames before Peak ERP index
 
                     if cond == 1 % hit
                         saveas(gcf, [out_subfold, 'Mind_hoops_hit_BP_', participant, '.png']); % Save the figure as a PNG image
@@ -782,9 +779,6 @@ for sub = 1 : length(files)
 
         ID{sub} = participant; % Assigning ID's
 
-        Hoop_accuracy{sub} = shoot_per;
-
-
 
         %% Saving per condition or general average
 
@@ -841,16 +835,6 @@ for sub = 1 : length(files)
 
 
 end
-
-
-%% Table shooting percentage accuracy
-
-% write actual tables
-T.Accuracy = Hoop_accuracy';
-
-% Save it in .mat file
-save([outpath, 'Info_EEG.mat'],'T');
-% writetable(T, [outpath, 'Info_EEG.xlsx']);
 
 
 %%

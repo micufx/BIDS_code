@@ -77,8 +77,8 @@ for sub = 1 : length(files)
         label_comp(compy)  = {EEG.etc.ic_classification.ICLabel.classes{idx_label}};
 
         %Save the figure as a PNG image
-        saveas(fig_IC , [out_subfold, 'Bad_compon_', num2str(bad_compons(compy)), '_', label_comp{compy}, '_', participant, '.png']);
-        saveas(fig_IC , [outpath, '\\group_analysis\\', 'Bad_compon_', num2str(bad_compons(compy)), '_', label_comp{compy}, '_', participant, '.png']); % Save the figure as a PNG image
+        % saveas(fig_IC , [out_subfold, 'Bad_compon_', num2str(bad_compons(compy)), '_', label_comp{compy}, '_', participant, '.png']);
+        % saveas(fig_IC , [outpath, '\\group_analysis\\', 'Bad_compon_', num2str(bad_compons(compy)), '_', label_comp{compy}, '_', participant, '.png']); % Save the figure as a PNG image
         clear fig_IC
 
     end

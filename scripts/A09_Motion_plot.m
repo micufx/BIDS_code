@@ -196,7 +196,7 @@ for sub = 1 : length(files)
         subplotERP = subtightplot_2(nRows, nCols, [7, 8, 9, 10, 11, 12]);
 
         % Define your y-limits
-        yLimits = [-30, 30];
+        yLimits = [-35, 30];
         ylim(yLimits);
 
         % Process the data to mask values outside the y-limits
@@ -310,18 +310,16 @@ for sub = 1 : length(files)
 
         % Basketball onset
         accOnset_rev = line(ax2, [avgOnsetTime_rev avgOnsetTime_rev], [0, accMax], 'Color', 'black', 'LineStyle', ':', 'LineWidth', 2);    % [accMin, accMax]
-
-        % Add a label to the line Basketball onset (apply a vertical offset)
-        text(ax2, avgOnsetTime_rev, accMax - 2, 'MP', 'Color', 'k', 'FontSize', 10, 'HorizontalAlignment', 'right', 'VerticalAlignment', 'top', 'Rotation', 90, 'FontWeight', 'bold');  % Adjust the 'accMax - 10' to position the label
+        
+        % Add a label to the line movement onset
+        text(avgOnsetTime_rev, accMax, 'MP', 'Color', 'k', 'FontSize', 10, 'HorizontalAlignment', 'right', 'VerticalAlignment', 'top', 'Rotation', 90, 'FontWeight', 'bold');
 
         % Movement onset
         currentPointLine_3 = line(subplotERP, [EEG.times(movement_onset), EEG.times(movement_onset)], yLimits, 'Color', 'red', 'LineWidth', 2, 'Linestyle', '--');
 
-        % Add a label to the line movement onset (apply a vertical offset)
-        text(ax2, EEG.times(movement_onset), accMax - 2, 'ACC', 'Color', 'r', 'FontSize', 10, 'HorizontalAlignment', 'right', 'VerticalAlignment', 'top', 'Rotation', 90, 'FontWeight', 'bold');  % Adjust the 'accMax - 20' to position the label
+        % Add a label to the line basketball onset
+        text(0, accMax, 'ACC', 'Color', 'r', 'FontSize', 10, 'HorizontalAlignment', 'right', 'VerticalAlignment', 'top', 'Rotation', 90, 'FontWeight', 'bold');
 
-        % Add a label to the line
-        %text(ax2, avgOnsetTime_rev, accMax-9, 'Rev', 'Color', 'k', 'FontSize', 10, 'HorizontalAlignment', 'right', 'VerticalAlignment', 'middle', 'Rotation', 90, 'FontWeight','bold');
 
         % % Plot the onset marker off the Derivative Method
         % accOnset_dev = line(ax2, [onsetTime_acc_dev onsetTime_acc_dev], [accMin, accMax], 'Color', "#D95319", 'LineStyle', '--', 'LineWidth', 2.5);

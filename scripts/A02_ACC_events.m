@@ -445,126 +445,12 @@ for sub = 1 : length(files)
         onsetFrames = [events_ACC.latency];
 
 
-        %% Plotting
-
-        % Constants for plotting
-        colors = lines(length(epochs_accMagnitude_rev));   % Use hsv, jet or any other colormap
-        % Mix with white to lighten the colors
-        lightenFactor = 0.5;  % Adjust this to make the color lighter (closer to 1 makes it lighter)
-        colors = colors + lightenFactor * (1 - colors);
-
-        % Plot each trial as a semi-transparent line
-        acc_fig_rev = figure('units','normalized','outerposition', [0 0 1 1]); hold on;
-        for trial = 1:size(epochs_accMagnitude_rev, 2)
-            trials = plot(epochTimes_rev, epochs_accMagnitude_rev(:, trial), 'Color', colors(trial, :), 'LineWidth', 1);
-        end
-
-        % Calculate the average acceleration across all trials
-        avgAccMagnitude_rev = mean(epochs_accMagnitude_rev, 2);
-
-        % Plot the average acceleration
-        acc_line = plot(epochTimes_rev, avgAccMagnitude_rev, 'LineStyle', '-', ...
-            'Marker', 'o', 'MarkerIndices', 1:10:length(avgAccMagnitude_rev),'LineWidth', 2.5, 'Color', 'k');
-
-        % Calculate the upper and lower bounds of the shaded area
-        upper_bound_rev = avgAccMagnitude_rev + baselineStd;
-        lower_bound_rev = avgAccMagnitude_rev - baselineStd;
-
-        % Assuming you have the figure already open and have plotted the trials
-
-        % Highlight the baseline period
-        baselineStart = prob_bl_start; % adjust to your baseline start time
-        baselineEnd = prob_bl_end; % adjust to your baseline end time
-
-        % Get the current y-axis limits
-        ylimits = [0 180];
-
-        % Fill between the baseline period with a light blue color and some transparency
-        fill([baselineStart, baselineStart, baselineEnd, baselineEnd], [ylimits(1), ylimits(2), ylimits(2), ylimits(1)], [0 0.4470 0.7410], 'FaceAlpha', 0.3, 'EdgeColor', 'none');
-
-
-        % Calculate the average onset time
-        validOnsetIndices = ~isnan(movementOnsets);
-        RC_onsets = epochTimes_rev(movementOnsets(validOnsetIndices));
-        avgOnsetTime_rev = mean(RC_onsets);
-
-        % Plot a vertical line at the average onset time
-        line([avgOnsetTime_rev, avgOnsetTime_rev], ylim, 'Color', 'red', 'LineStyle', '--', 'LineWidth', 2.5);
-
-
-        % Displaying label condition
-
-        if cond == 1 % 'hit'
-
-            cond_label = 'Hits';
-
-        elseif cond == 2 % 'miss'
-
-            cond_label = 'Misses';
-
-        elseif cond == 3  % % 'none'
-
-            cond_label = 'All trials';
-
-        end
-
-        xlabel('Time [ms]');
-        ylabel('Acceleration Magnitude [m/s^2]');
-        title('Onset Detection Based On Wrist Acceleration');
-        subtitle(['Sub. [', num2str(sub), '] / ', '[Reverse Computation Algorithm]']);
-        legend([trials, acc_line], {cond_label, 'Mean'}, 'Location', 'northwest');
-        ylim(ylimits)
-        xlim([from*1000 to*1000]);
-        grid on;
-
-
-
-
         %% Saving
-
-        if cond == 1 % 'hit'
-
-            % Save it in .mat file
-            save([out_subfold, 'ACC_rev_hit_', participant,'.mat'],'avgAccMagnitude_rev', 'epochTimes_rev', 'sampling_rate_acc', ...
-                'epochs_accMagnitude_rev', 'baselineStd', 'upper_bound_rev', 'lower_bound_rev', 'avgOnsetTime_rev', 'RC_onsets');
-
-
-            % Save the figure as a PNG image
-            saveas(acc_fig_rev, [out_subfold, 'ACC_fig_rev_hit_', participant, '.png']);
-            saveas(acc_fig_rev, [outpath, '\\group_analysis\\','ACC_fig_rev_hit_', participant, '.png']); % Save the figure as a PNG image
-
-
-        elseif cond == 2 % 'miss'
-
-            % Save it in .mat file
-            save([out_subfold, 'ACC_rev_miss_', participant,'.mat'],'avgAccMagnitude_rev', 'epochTimes_rev', 'sampling_rate_acc', ...
-                'epochs_accMagnitude_rev', 'baselineStd', 'upper_bound_rev', 'lower_bound_rev', 'avgOnsetTime_rev', 'RC_onsets');
-
-
-            % Save the figure as a PNG image
-            saveas(acc_fig_rev, [out_subfold, 'ACC_fig_rev_miss_', participant, '.png']);
-            saveas(acc_fig_rev, [outpath, '\\group_analysis\\','ACC_fig_rev_miss_', participant, '.png']); % Save the figure as a PNG image
-
-
-        elseif cond == 3  % % 'none'
-
-            % Save it in .mat file
-            save([out_subfold, 'ACC_rev_', participant,'.mat'],'avgAccMagnitude_rev', 'epochTimes_rev', 'sampling_rate_acc', ...
-                'epochs_accMagnitude_rev', 'baselineStd', 'upper_bound_rev', 'lower_bound_rev', 'avgOnsetTime_rev', 'RC_onsets');
-
-
-            % Save the figure as a PNG image
-            saveas(acc_fig_rev, [out_subfold, 'ACC_fig_rev_', participant, '.png']);
-            saveas(acc_fig_rev, [outpath, '\\group_analysis\\','ACC_fig_rev_', participant, '.png']);
-
-        end
-
-
 
         % Save the combined events structure
         save([out_subfold, 'events_all_', participant, '.mat'], 'all_events', 'events_MP', 'events_ACC',...
             'timeseries_mp', 'timestamps_mp', 'timeseries_eeg', 'timestamps_eeg', ...
-            'sampling_rate_eeg', 'sampling_rate_mp');
+            'sampling_rate_eeg', 'sampling_rate_mp', 'sampling_rate_acc');
 
 
 
@@ -589,6 +475,10 @@ for sub = 1 : length(files)
 
     clear timeseries_acc
     clear timestamps_acc
+    clear timeseries_mp
+    clear timestamps_mp
+    clear timeseries_eeg
+    clear timestamps_eeg
 
 
 end
