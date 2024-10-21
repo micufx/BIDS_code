@@ -213,9 +213,8 @@ for sub = 1: 1%length(files)
     cfg.motion.samplingrate = sampling_rate_acc;
 
     % specify channel details, this overrides the details in the original data structure
-    cfg.channels = [];
     cfg.channels.name = mocap.label;
-    cfg.channels.component = cellstr(repmat({'acc_x','acc_y','acc_z', 'gyro_x','gyro_y','gyro_z'},1, length(mocap.label)/3));
+    cfg.channels.component = {'acc_x','acc_y','acc_z', 'gyro_x','gyro_y','gyro_z'};
     cfg.channels.type = cellstr(repmat({'ACCEL''GYRO'},length(mocap.label),1));
     cfg.channels.tracked_point = mocap.label;
     cfg.channels.units = cellstr(repmat('m s−2',length(mocap.label),1));
