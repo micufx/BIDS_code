@@ -369,8 +369,8 @@ for sub=1 : 1 %length(files)
 
     end
     %
-    % saveas(gcf, [out_subfold, 'PLD_onsets_', participant, '.png']); % Save the figure as a PNG image
-    % saveas(gcf, [outpath, '\\group_analysis\\','PLD_onsets_', participant, '.png']); % Save the figure as a PNG image
+    % saveas(gcf, [out_subfold, 'PLD_onsets_', participant, '.jpg']); % Save the figure as a PNG image
+    % saveas(gcf, [outpath, '\\group_analysis\\','PLD_onsets_', participant, '.jpg']); % Save the figure as a PNG image
 
 
     %% Deleting false onsets
@@ -554,8 +554,8 @@ for sub=1 : 1 %length(files)
     grid on;  % Display the plot
 
 
-    % saveas(gcf, [out_subfold, 'PLD_interpolation_', participant, '.png']); % Save the figure as a PNG image
-    % saveas(gcf, [outpath, '\\group_analysis\\','PLD_interpolation_', participant, '.png']); % Save the figure as a PNG image
+    % saveas(gcf, [out_subfold, 'PLD_interpolation_', participant, '.jpg']); % Save the figure as a PNG image
+    % saveas(gcf, [outpath, '\\group_analysis\\','PLD_interpolation_', participant, '.jpg']); % Save the figure as a PNG image
 
 
     %% Saving events
