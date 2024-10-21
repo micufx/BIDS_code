@@ -33,7 +33,7 @@ cfg.bidsroot = './data/bids';  % write to the present working directory
 
 %% Loop over datasets
 
-for sub = 1: 1%length(files)
+for sub = 1: length(files)
 
     participant = extractBefore(files(sub).name, '.xdf');  % get subject name
     data = load_xdf(fullfile(dir_data,'raw', files(sub).name)); % Saving the data in a variable
