@@ -208,16 +208,16 @@ for sub = 1: 1%length(files)
     cfg.datatype = 'motion';
     cfg.task = 'Freethrow';
     cfg.bidsroot = './data/bids';
-    cfg.tracksys = 'Movella DOT';
-    cfg.motion.TrackingSystemName = 'Movella DOT';
+    cfg.tracksys = 'MovellaDOT';
+    cfg.motion.TrackingSystemName = 'MovellaDOT';
     cfg.motion.samplingrate = sampling_rate_acc;
 
     % specify channel details, this overrides the details in the original data structure
     cfg.channels.name = mocap.label;
-    cfg.channels.component = {'acc_x','acc_y','acc_z', 'gyro_x','gyro_y','gyro_z'};
-    cfg.channels.type = cellstr(repmat({'ACCEL''GYRO'},length(mocap.label),1));
+    cfg.channels.component = {'x','y','z', 'x','y','z'};
+    cfg.channels.type = {'ACCEL','ACCEL','ACCEL','GYRO', 'GYRO', 'GYRO'};
     cfg.channels.tracked_point = mocap.label;
-    cfg.channels.units = cellstr(repmat('m s−2',length(mocap.label),1));
+    cfg.channels.units = cellstr(repmat('m/s^2',length(mocap.label),1));
 
     mocap = ft_datatype_raw(mocap);
 
