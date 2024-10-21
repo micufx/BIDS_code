@@ -161,8 +161,8 @@ for sub = 1 : length(files)
 
 
     % Save the figure as a PNG image
-    saveas(fig_bad_chan, [out_subfold, 'Bad_chan_', participant, '.png']);
-    saveas(fig_bad_chan, [outpath, '\\group_analysis\\','Bad_chan_', participant, '.png']); % Save the figure as a PNG image
+    saveas(fig_bad_chan, [out_subfold, 'Bad_chan_', participant, '.jpg']);
+    saveas(fig_bad_chan, [outpath, '\\group_analysis\\','Bad_chan_', participant, '.jpg']); % Save the figure as a PNG image
 
     
     disp([participant, ' finalized!']);
