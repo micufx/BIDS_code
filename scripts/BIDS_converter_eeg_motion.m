@@ -1,6 +1,8 @@
 %% Convert source data to BIDS
 clc; clear; close all;
 
+%% Dynamic paths
+
 % Get the full path of the current script
 scriptPath = fileparts(mfilename('fullpath'));
 proj_dir = fullfile(scriptPath, '..');
