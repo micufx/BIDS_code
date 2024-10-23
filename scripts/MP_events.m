@@ -68,7 +68,7 @@ files = dir( fullfile( path,'\*.xdf')); % listing data sets
 
 %% Selecting participant
 
-for sub=1 : 1 %length(files)
+for sub=1 : length(files)
 
     participant = extractBefore(files(sub).name, '.xdf');
     out_subfold = [outpath, participant, '\\'];
@@ -134,7 +134,7 @@ for sub=1 : 1 %length(files)
     disp(['EEG recording: ', num2str(length_minutes_eeg), ' minutes']);
 
 
-    % % Interpolation
+    %% Interpolation
     % timeseries_mp = interp1(timestamps_mp, timeseries_mp', timestamps_eeg, 'linear')';
     % timestamps_mp = timestamps_eeg;
 
@@ -178,9 +178,9 @@ for sub=1 : 1 %length(files)
     cooldownDuration =  10; % 0.5;  for interpolated data
     cooldownEndTime = 0;
 
-    % Loop through the frames starting from the second frame
-    % Here I start after 2000 frames because the close eyes recording at
-    % the beginning.
+    % Loop through the frames starting from frames ahead 
+    % Here I start after 2000 frames because there was a close 
+    % eyes recording at the beginning of the experiment for validation
 
     for i = 2000:numFrames %
 
@@ -306,10 +306,203 @@ for sub=1 : 1 %length(files)
         disp('No onsets detected!');
     end
 
+    %%
 
-    % Marker events
-    % Average body movement
+    %% Displaying false onsets
 
+    % if length(onsetTimes) > 120  % number of trials
+    % 
+    % 
+    %     % Displaying frame markers for inspection
+    % 
+    %     % Determine the number of frames and landmarks
+    %     numFrames = size(timeseries_mp, 2); % Number of frames
+    %     numLandmarks = size(timeseries_mp, 1) / 3; % Number of landmarks (33 according to MediaPipe)
+    % 
+    %     % Labels (33) based on the documentation
+    %     landmarkLabels = {
+    %         'nose', 'left eye (inner)', 'left eye', 'left eye (outer)', 'right eye (inner)',...
+    %         'right eye', 'right eye (outer)', 'left ear', 'right ear', ...
+    %         'mouth (left)', 'mouth (right)', 'left shoulder', 'right shoulder', 'left elbow',...
+    %         'right elbow', 'left wrist', 'right wrist', 'left pinky', 'right pinky', ...
+    %         'left index', 'right index', 'left thumb', 'right thumb', 'left hip', 'right hip',...
+    %         'left knee', 'right knee', 'left ankle', 'right ankle', ...
+    %         'left heel', 'right heel', 'left foot index', 'right foot index'
+    %         };
+    % 
+    %     % Define colors for each body point
+    %     pointColors = lines(numLandmarks);
+    % 
+    %     % Define clusters of body parts
+    %     clusters = {[1:10], [11, 13, 15, 17, 19, 21], [12, 14, 16, 18, 20, 22], [23, 24],...
+    %         [12, 11], [24, 26, 28], [23, 25, 27], [28, 30, 32], [27, 29, 31]};
+    % 
+    %     % Initialize the figure and set axis limits based on the data
+    %     figure;
+    %     minX = min(min(timeseries_mp(1:3:end, :)));
+    %     maxX = max(max(timeseries_mp(1:3:end, :)));
+    % 
+    %     minY = min(min(timeseries_mp(2:3:end, :)));
+    %     maxY = max(max(timeseries_mp(2:3:end, :)));
+    % 
+    %     minZ = min(min(timeseries_mp(3:3:end, :)));
+    %     maxZ = max(max(timeseries_mp(3:3:end, :)));
+    % 
+    %     axisLimits = [minX, maxX, minY, maxY, minZ, maxZ];
+    % 
+    %     % Loop through the markers to visualize events in body shape
+    %     for i = 1:length(onsetFrames)
+    % 
+    %         landmarks = timeseries_mp(:, onsetFrames(i));
+    % 
+    %         % Split the data into X, Y, and Z coordinates for each landmark
+    %         x_coords = landmarks(1:3:end);
+    %         y_coords = landmarks(2:3:end);
+    %         z_coords = landmarks(3:3:end);
+    % 
+    %         % Create a 3D plot of the landmarks for each body part with unique colors
+    %         figure (onsetFrames(i))
+    %         scatter3(x_coords, y_coords, z_coords, 30, pointColors, 'filled');
+    % 
+    %         % Add labels for each body point
+    %         for foton = [6, 17]
+    %             text(x_coords(foton), y_coords(foton), z_coords(foton), landmarkLabels{foton},...
+    %                 'Color', pointColors(foton, :));
+    %         end
+    % 
+    %         % Customize the plot appearance (e.g., title, labels, etc.)
+    %         title('Pose Landmark Detection');
+    %         subtitle(['Frame ', num2str(onsetFrames(i))])
+    %         subtitle(['Frame: ', num2str(onsetFrames(i)), ' at ', num2str(timestamps_mp(onsetFrames(i))), ' [s]'])
+    %         xlabel('X-coordinate');
+    %         ylabel('Y-coordinate');
+    %         zlabel('Z-coordinate');
+    % 
+    %         % Set axis limits for consistent scaling
+    %         axis(axisLimits);
+    % 
+    %         % View with the desired orientation
+    %         % view(3) %for 3D
+    %         view(0, -90);
+    % 
+    %         % Connect body parts within clusters with lines
+    %         for b_part = 1:length(clusters)
+    %             cluster_points = clusters{b_part};
+    %             for foton = 1:(length(cluster_points) - 1)
+    %                 idx1 = cluster_points(foton);
+    %                 idx2 = cluster_points(foton + 1);
+    %                 line([x_coords(idx1), x_coords(idx2)],...
+    %                     [y_coords(idx1), y_coords(idx2)],...
+    %                     [z_coords(idx1), z_coords(idx2)], 'Color', pointColors(idx1, :));
+    %             end
+    %         end
+    % 
+    %         % Display the plot
+    %         grid on;
+    %         axis equal;
+    % 
+    %     end
+    % 
+    % end
+
+    %% Deleting false onsets
+
+    % Define frames to delete for each participant. You can add these manually.
+    % For example, for participant "sub_01", you might define specific frames to delete.
+    framesToDeleteMap = containers.Map();
+    framesToDeleteMap('sub_01') = [];  % No frames to delete for this participant
+    framesToDeleteMap('sub_02') = [];  % No frames to delete for this participant  
+    framesToDeleteMap('sub_03') = [];  % No frames to delete for this participant
+    framesToDeleteMap('sub_04') = [];  % No frames to delete for this participant   
+    framesToDeleteMap('sub_05') = [];  % No frames to delete for this participant
+    framesToDeleteMap('sub_06') = [141733, 625194]; 
+    framesToDeleteMap('sub_07') = [];  % No frames to delete for this participant
+    framesToDeleteMap('sub_08') = [];  % No frames to delete for this participant       
+    framesToDeleteMap('sub_09') = [358379, 600464]; 
+    framesToDeleteMap('sub_10') = [377391, 592613];
+    framesToDeleteMap('sub_11') = [];  % No frames to delete for this participant    
+    framesToDeleteMap('sub_12') = [];  % No frames to delete for this participant   
+    framesToDeleteMap('sub_13') = [];  % No frames to delete for this participant
+    framesToDeleteMap('sub_14') = [];  % No frames to delete for this participant   
+    framesToDeleteMap('sub_15') = [];  % No frames to delete for this participant
+    framesToDeleteMap('sub_16') = [509098]; 
+    framesToDeleteMap('sub_17') = [];  % No frames to delete for this participant
+    framesToDeleteMap('sub_18') = [];  % No frames to delete for this participant   
+    framesToDeleteMap('sub_19') = [];  % No frames to delete for this participant
+    framesToDeleteMap('sub_20') = [];  % No frames to delete for this participant   
+    framesToDeleteMap('sub_21') = [426594, 423970, 94478];  
+    framesToDeleteMap('sub_22') = [107628, 430719]; 
+    framesToDeleteMap('sub_23') = [];  % No frames to delete for this participant
+    framesToDeleteMap('sub_24') = [];  % No frames to delete for this participant   
+    framesToDeleteMap('sub_25') = [102812];  
+    framesToDeleteMap('sub_26') = [173810]; 
+    framesToDeleteMap('sub_27') = [269430]; 
+
+
+    % Check if the current participant has frames to delete
+    if isKey(framesToDeleteMap, participant)
+        framesToDelete = framesToDeleteMap(participant);  % Get the frames to delete
+
+        % Find indices of frames to delete
+        indicesToDelete = find(ismember(onsetFrames, framesToDelete));
+
+        % Delete corresponding frames and onsetTimes
+        onsetFrames(indicesToDelete) = [];  % Remove the bad onset frames
+        onsetTimes(indicesToDelete) = [];   % Remove the corresponding onset times
+
+        % Display the frames that were deleted
+        disp(['Deleted frames for ', participant, ': ', num2str(framesToDelete)]);
+    end
+
+    % This part of the code is only used in case that the participants raised
+    % their hands for some reason during the experiment, which will be detected
+    % as an onset. Therefore, for the ones that have more than 120 shots
+    % detected, one can plot the frames of those timepoints and compare whith
+    % the video recordings to know what happened. Usually one can see that most
+    % of those false detected osets are in the trial break, when the
+    % participants are sitting down, by drinking water for example, which is
+    % visible in the PLD frame.
+
+
+    %% Assigning labels to the markers by table
+
+    % Load the labels from an Excel file
+    labelsTable = readtable([out_subfold, participant, '.xlsx']);
+
+    % Extract block names and shot labels
+    blockNames = labelsTable.Properties.VariableNames;
+    shotLabels = table2array(labelsTable);
+
+    % Create events structure
+    numEvents = numel(shotLabels);
+    events_MP = struct('type', cell(1, numEvents), 'latency', zeros(1, numEvents), 'urevent', zeros(1, numEvents), 'duration', ones(1, numEvents));
+
+    % Assign 'hit', 'miss', or 'none' for each event based on the labels table
+    for shot = 1:numEvents
+        events_MP(shot).latency = onsetFrames(shot);
+        events_MP(shot).time = onsetTimes(shot);
+
+        % Extract block name for the current shot
+        currentBlock = blockNames{ceil(shot / size(shotLabels, 1))};
+
+        % Check label and assign type accordingly
+        if shotLabels(shot) == 1
+            events_MP(shot).type = 'hit_MP';
+        elseif shotLabels(shot) == 2
+            events_MP(shot).type = 'miss_MP';
+        else
+            error('Invalid label. Label must be 1 (hit) or 2 (miss).');
+        end
+
+        events_MP(shot).urevent = shot;
+        events_MP(shot).duration = 1; % samples
+        events_MP(shot).block = currentBlock; % Add block information
+    end
+
+
+    %% Plotting onsets (basketball shots)
+
+    % Average body movement & Marker events
     % Averaging all 33 channel points to have a common representation
     ave_channels = mean(timeseries_mp, 1);
 
@@ -365,170 +558,13 @@ for sub=1 : 1 %length(files)
     % If after all there are still false trials detected, proceed to manual
     % trial rejection inspecting the video
     if length(onsetTimes) > 120  % If there are extra trials detected
-        error('There are false onsets detected, inspect the video!')
-
+        warning('There are false onsets detected, deleting false onsets...')
     end
-    %
-    % saveas(gcf, [out_subfold, 'PLD_onsets_', participant, '.jpg']); % Save the figure as a PNG image
+
+    saveas(gcf, [out_subfold, 'PLD_onsets_', participant, '.jpg']); % Save the figure as a PNG image
     % saveas(gcf, [outpath, '\\group_analysis\\','PLD_onsets_', participant, '.jpg']); % Save the figure as a PNG image
 
-
-    %% Deleting false onsets
-
-    if length(onsetTimes) > 120  % number of trials
-
-
-        % Displaying frame markers for inspection
-
-        % Determine the number of frames and landmarks
-        numFrames = size(timeseries_mp, 2); % Number of frames
-        numLandmarks = size(timeseries_mp, 1) / 3; % Number of landmarks (33 according to MediaPipe)
-
-        % Labels (33) based on the documentation
-        landmarkLabels = {
-            'nose', 'left eye (inner)', 'left eye', 'left eye (outer)', 'right eye (inner)',...
-            'right eye', 'right eye (outer)', 'left ear', 'right ear', ...
-            'mouth (left)', 'mouth (right)', 'left shoulder', 'right shoulder', 'left elbow',...
-            'right elbow', 'left wrist', 'right wrist', 'left pinky', 'right pinky', ...
-            'left index', 'right index', 'left thumb', 'right thumb', 'left hip', 'right hip',...
-            'left knee', 'right knee', 'left ankle', 'right ankle', ...
-            'left heel', 'right heel', 'left foot index', 'right foot index'
-            };
-
-        % Define colors for each body point
-        pointColors = lines(numLandmarks);
-
-        % Define clusters of body parts
-        clusters = {[1:10], [11, 13, 15, 17, 19, 21], [12, 14, 16, 18, 20, 22], [23, 24],...
-            [12, 11], [24, 26, 28], [23, 25, 27], [28, 30, 32], [27, 29, 31]};
-
-        % Initialize the figure and set axis limits based on the data
-        figure;
-        minX = min(min(timeseries_mp(1:3:end, :)));
-        maxX = max(max(timeseries_mp(1:3:end, :)));
-
-        minY = min(min(timeseries_mp(2:3:end, :)));
-        maxY = max(max(timeseries_mp(2:3:end, :)));
-
-        minZ = min(min(timeseries_mp(3:3:end, :)));
-        maxZ = max(max(timeseries_mp(3:3:end, :)));
-
-        axisLimits = [minX, maxX, minY, maxY, minZ, maxZ];
-
-        % Loop through the markers to visualize events in body shape
-        for i = 1:length(onsetFrames)
-
-            landmarks = timeseries_mp(:, onsetFrames(i));
-
-            % Split the data into X, Y, and Z coordinates for each landmark
-            x_coords = landmarks(1:3:end);
-            y_coords = landmarks(2:3:end);
-            z_coords = landmarks(3:3:end);
-
-            % Create a 3D plot of the landmarks for each body part with unique colors
-            figure (onsetFrames(i))
-            scatter3(x_coords, y_coords, z_coords, 30, pointColors, 'filled');
-
-            % Add labels for each body point
-            for foton = [6, 17]
-                text(x_coords(foton), y_coords(foton), z_coords(foton), landmarkLabels{foton},...
-                    'Color', pointColors(foton, :));
-            end
-
-            % Customize the plot appearance (e.g., title, labels, etc.)
-            title('Pose Landmark Detection');
-            subtitle(['Frame ', num2str(onsetFrames(i))])
-            subtitle(['Frame: ', num2str(onsetFrames(i)), ' at ', num2str(timestamps_mp(onsetFrames(i))), ' [s]'])
-            xlabel('X-coordinate');
-            ylabel('Y-coordinate');
-            zlabel('Z-coordinate');
-
-            % Set axis limits for consistent scaling
-            axis(axisLimits);
-
-            % View with the desired orientation
-            % view(3) %for 3D
-            view(0, -90);
-
-            % Connect body parts within clusters with lines
-            for b_part = 1:length(clusters)
-                cluster_points = clusters{b_part};
-                for foton = 1:(length(cluster_points) - 1)
-                    idx1 = cluster_points(foton);
-                    idx2 = cluster_points(foton + 1);
-                    line([x_coords(idx1), x_coords(idx2)],...
-                        [y_coords(idx1), y_coords(idx2)],...
-                        [z_coords(idx1), z_coords(idx2)], 'Color', pointColors(idx1, :));
-                end
-            end
-
-            % Display the plot
-            grid on;
-            axis equal;
-
-        end
-
-    end
-
-
-    %%
-
-    % % After inspection, delete bad trial frames here:
-    % framesToDelete = [];
-    %
-    % % Find indices of frames to delete
-    % indicesToDelete = find(ismember(onsetFrames, framesToDelete));
-    %
-    % % Delete corresponding frames and onsetTimes
-    % onsetFrames(indicesToDelete) = []; % MediaPipe crush
-    % onsetTimes(indicesToDelete) = [];
-
-    % This part of the code is only used in case that the participants raised
-    % their hands for some reason during the experiment, which will be detected
-    % as an onset. Therefore, for the ones that have more than 120 shots
-    % detected, one can plot the frames of those timepoints and compare whith
-    % the video recordings to know what happened. Usually one can see that most
-    % of those false detected osets are in the trial break, when the
-    % participants are sitting down, by drinking water for example, which is
-    % visible in the PLD frame.
-
-
-    %% Assigning labels to the markers by table
-
-    % Load the labels from an Excel file
-    labelsTable = readtable([out_subfold, participant, '.xlsx']);
-
-    % Extract block names and shot labels
-    blockNames = labelsTable.Properties.VariableNames;
-    shotLabels = table2array(labelsTable);
-
-    % Create events structure
-    numEvents = numel(shotLabels);
-    events_MP = struct('type', cell(1, numEvents), 'latency', zeros(1, numEvents), 'urevent', zeros(1, numEvents), 'duration', ones(1, numEvents));
-
-    % Assign 'hit', 'miss', or 'none' for each event based on the labels table
-    for shot = 1:numEvents
-        events_MP(shot).latency = onsetFrames(shot);
-        events_MP(shot).time = onsetTimes(shot);
-
-        % Extract block name for the current shot
-        currentBlock = blockNames{ceil(shot / size(shotLabels, 1))};
-
-        % Check label and assign type accordingly
-        if shotLabels(shot) == 1
-            events_MP(shot).type = 'hit_MP';
-        elseif shotLabels(shot) == 2
-            events_MP(shot).type = 'miss_MP';
-        else
-            error('Invalid label. Label must be 1 (hit) or 2 (miss).');
-        end
-
-        events_MP(shot).urevent = shot;
-        events_MP(shot).duration = 1; % samples
-        events_MP(shot).block = currentBlock; % Add block information
-    end
-
-
+    
     %% Extra: Interpolation procedure illustration
 
     % Time series plot for average body data
@@ -553,10 +589,8 @@ for sub=1 : 1 %length(files)
     axis tight;
     grid on;  % Display the plot
 
-
-    % saveas(gcf, [out_subfold, 'PLD_interpolation_', participant, '.jpg']); % Save the figure as a PNG image
+    saveas(gcf, [out_subfold, 'PLD_interpolation_', participant, '.jpg']); % Save the figure as a PNG image
     % saveas(gcf, [outpath, '\\group_analysis\\','PLD_interpolation_', participant, '.jpg']); % Save the figure as a PNG image
-
 
     %% Saving events
 
@@ -565,7 +599,6 @@ for sub=1 : 1 %length(files)
     % % Save it in .mat file
     % save([out_subfold, 'events_MP_', participant,'.mat'],'events_MP', 'onsetTimes', 'onsetFrames', ...
     %     'timeseries_mp', 'timestamps_mp', 'sampling_rate_eeg', 'sampling_rate_mp');
-
 
     %%
 
