@@ -46,32 +46,6 @@ for sub = 1 : length(files)
         end
 
 
-        % Onset detection
-        % For some participants (5), the onset detection methods were
-        % rather innacurate after inspecting the motion video. Therefore,
-        % onsets movement initiation based on methods are replaced by
-        % visual inspection detection.
-
-        % if sub ==4
-        %     avgOnsetTime_rev = -800; %[ms] --> Inspect motion video 
-        % 
-        % elseif sub==7
-        %     avgOnsetTime_rev = -1100; %[ms] --> Inspect motion video 
-        % 
-        % elseif sub==10
-        %     avgOnsetTime_rev = -900; %[ms] --> Inspect motion video 
-        % 
-        % elseif sub==18
-        %     avgOnsetTime_rev = -1100; %[ms] --> Inspect motion video 
-        % 
-        % elseif sub==19
-        %     avgOnsetTime_rev = -1000; %[ms] --> Inspect motion video 
-        % 
-        % elseif sub==27
-        %     avgOnsetTime_rev = -1000; %[ms] --> Inspect motion video 
-        % end
-
-
         % Readiness potential range
         start_BP = find(EEG.times== -2500);
         end_BP = find(EEG.times== 0);
@@ -371,6 +345,6 @@ save([outpath, 'results_conditions','.mat'], 'results_conditions', 'mean_observa
 
 % Save it in .mat file
 save([outpath, 'results_RP','.mat'], 'results_RP');
-writetable(results_RP, 'results_RP.xlsx');
+writetable(results_RP,  [outpath,'results_RP.xlsx']);
 
 %% 
