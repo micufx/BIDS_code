@@ -57,6 +57,24 @@ for i = 2:length(ALLEEG)
 end
 
 
+% Storing all trial infor in a matrix for further plotting
+
+% Initialize grand average EEG variables
+all_trials_data = []; % [channels x time_points x all_trials]
+
+% Loop through each EEG dataset in ALLEEG to extract and concatenate data
+for sub = 1:length(ALLEEG)
+    % Access the current participant's EEG data
+    EEG_matrix = ALLEEG(sub);
+
+    % Concatenate trials along the third dimension
+    all_trials_data = cat(3, all_trials_data, EEG_matrix.data);
+end
+
+save([outpath, 'Study_ERP_image.mat'], 'all_trials_data');
+
+
+
 %% Averaging epochs across to get ERPs
 
 channels = size(ALLEEG(1).data, 1);
@@ -91,9 +109,11 @@ newEEGall.nbchan = channels;
 EEG = newEEGall;
 EEG.setname = 'Grand_avg_all';
 EEG = pop_saveset( EEG, 'filename',['Grand_avg_all','.set'],'filepath', outpath);
+
 clear EEG
 clear ALLEEG
-
+clear all_trials_data
+clear EEG_matrix
 
 %% Study eeglab (loading sets by conditions)
 
@@ -171,6 +191,44 @@ end
 %
 % CURRENTSTUDY = 1; EEG = ALLEEG; CURRENTSET = [1:length(EEG)];
 % [STUDY, ALLEEG] = std_precomp(STUDY, ALLEEG, {},'savetrials','on','interp','on','recompute','on','erp','on','erpparams',{'rmbase',[-2500 -2000] },'spec','on','specparams',{'specmode','fft','logtrials','off'},'erpim','on','erpimparams',{'nlines',10,'smoothing',10});
+
+
+% Storing all hits trials infor in a matrix for further plotting
+
+% Initialize grand average EEG variables
+all_trials_data = []; % [channels x time_points x all_trials]
+
+% Loop through each EEG dataset in ALLEEG to extract and concatenate data
+for sub = 1: length(ALLEEG)/2 % First half are hits data
+    % Access the current participant's EEG data
+    EEG_matrix = ALLEEG(sub);
+
+    % Concatenate trials along the third dimension
+    all_trials_data = cat(3, all_trials_data, EEG_matrix.data);
+end
+
+save([outpath, 'Study_ERP_image_hit.mat'], 'all_trials_data');
+
+
+clear all_trials_data
+clear EEG_matrix
+
+
+% Storing all miss trials infor in a matrix for further plotting
+
+% Initialize grand average EEG variables
+all_trials_data = []; % [channels x time_points x all_trials]
+
+% Loop through each EEG dataset in ALLEEG to extract and concatenate data
+for sub = 1 + length(ALLEEG)/2  : length(ALLEEG)
+    % Access the current participant's EEG data
+    EEG_matrix = ALLEEG(sub);
+
+    % Concatenate trials along the third dimension
+    all_trials_data = cat(3, all_trials_data, EEG_matrix.data);
+end
+
+save([outpath, 'Study_ERP_image_miss.mat'], 'all_trials_data');
 
 
 %% Averaging epochs across to get ERPs

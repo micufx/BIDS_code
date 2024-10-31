@@ -25,6 +25,7 @@ for cond=1 : num_conditions
         load([outpath , 'ACC_grand_avg_rev_hit','.mat']); % Loading accelerometer data
         % load([outpath , 'ACC_grand_avg_dev_hit','.mat']); % Loading accelerometer data
         load([outpath , 'PLD_grand_avg_hit.mat'], 'averageTimeseriesMp', 'timestamps_mp');
+        load([outpath , 'Study_ERP_image_hit','.mat']); % Loading accelerometer data
 
         % Import EEG processed data
         [ALLEEG EEG CURRENTSET ALLCOM] = eeglab; % Open eeglab
@@ -36,6 +37,7 @@ for cond=1 : num_conditions
         load([outpath , 'ACC_grand_avg_rev_miss','.mat']); % Loading accelerometer data
         % load([outpath , 'ACC_grand_avg_dev_miss','.mat']); % Loading accelerometer data
         load([outpath , 'PLD_grand_avg_miss.mat'], 'averageTimeseriesMp', 'timestamps_mp');
+        load([outpath , 'Study_ERP_image_miss','.mat']); % Loading accelerometer data
 
         % Import EEG processed data
         [ALLEEG EEG CURRENTSET ALLCOM] = eeglab; % Open eeglab
@@ -47,6 +49,7 @@ for cond=1 : num_conditions
         load([outpath , 'ACC_grand_avg_rev','.mat']); % Loading accelerometer data
         % load([outpath , 'ACC_grand_avg_dev','.mat']); % Loading accelerometer data
         load([outpath , 'PLD_grand_avg.mat'], 'averageTimeseriesMp', 'timestamps_mp');
+        load([outpath , 'Study_ERP_image','.mat']); % Loading accelerometer data
 
         % Import EEG processed data
         [ALLEEG EEG CURRENTSET ALLCOM] = eeglab; % Open eeglab
@@ -194,16 +197,31 @@ for cond=1 : num_conditions
     fig = figure('units','normalized','outerposition', [0 0 1 1]);
 
     % Initialize subplots outside the loop
-    subplotPLD = subplot(2, 2, [1, 3]);
+    subplotPLD = subplot(2, 3, [1, 4]);
 
-    subplotTopo = subtightplot(2, 2, 2);
+
+    % Plot ERP Image (Top Center)
+    subplotERPImage = subplot(2, 3, 3);
+
+    erp_data = squeeze(all_trials_data(chan, :, :));  % Squeeze the data to remove singleton dimensions and transpose
+    sortvar = zeros(1, size(erp_data, 2));  % One value per trial (876 trials in this case)
+
+    erpimage(erp_data, [], EEG.times, 'Cz', 1, 1,...
+    'yerplabel', {'Grand Average ERP'},'erp', 'off', 'cbar', 'off','cbar_title', '\muV',...
+    'vert', [grand_avgOnsetTime_rev], ...
+    'topo', {chan, EEG.chanlocs, EEG.chaninfo},...
+    'caxis', [-40 40], 'avg_type', 'Gaussian', 'vert', grand_avgOnsetTime_rev,...
+    'img_trialax_label', {'All trials'}, 'img_trialax_ticks', [0 : 500 :size(erp_data,2)]);
+
+
+    subplotTopo = subplot(2, 3, 2);
     c = colorbar('Ticks',[-20 -10 0 10 20]);
     %c.TickLabels = {'-', '+'};
     c.Label.String = 'Amplitude [\muV]';
     c.Label.FontSize = 11;
-    c.Position = [0.897368143660326,0.604279806659505,0.004631856339674,0.247492481203008]; % Set the colorbar position
+    c.Position = [0.419411530644227, 0.628246253633742, 0.004631856339674, 0.247492481203008]; % Set the colorbar position
 
-    subplotERP = subtightplot_2(2, 2, 4);
+    subplotERP = subplot(2, 3, [5, 6]);
 
 
     % Initialize the vertical line outside of the loop
@@ -243,7 +261,7 @@ for cond=1 : num_conditions
     fill([baselineStart+1500, baselineStart+1500, baselineEnd+2000, baselineEnd+2000], [ylimits(1), ylimits(2), ylimits(2), ylimits(1)], [0.8500 0.3250 0.0980], 'FaceAlpha', 0.2, 'EdgeColor', 'none');
 
     % Customize ERP axes
-    title(subplotERP, 'Readiness potential', 'Color', "#0072BD", 'FontWeight', 'bold', 'FontSize', 12);
+    title(subplotERP, 'Grand Average Event Related Potential [ERP]', 'Color', "#0072BD", 'FontWeight', 'bold', 'FontSize', 12);
     subtitle(subplotERP, [num2str(EEG.times(1)), ' [ms]'], 'FontWeight', 'bold', 'FontSize', 11.5);
     ylabel(subplotERP, 'Amplitude [\muV]', 'FontSize', 11, 'Color', 'k');
     xlabel(subplotERP, 'Time [ms]', 'FontSize', 11);
@@ -310,7 +328,7 @@ for cond=1 : num_conditions
     % method that won in comparison with the others, also it goes according
     % literature and the SD method shows the same detection as well)
 
-    
+
     % Plot the Basketball onset
     accOnset_rev = line(ax2, [grand_avgOnsetTime_rev grand_avgOnsetTime_rev], [accMin, accMax], 'Color', 'k', 'LineStyle', ':', 'LineWidth', 2);
 
@@ -328,10 +346,11 @@ for cond=1 : num_conditions
     legend(subplotERP, [erpLine, gfpLine, accLine], {EEG.chanlocs(chan).labels, 'GFP', 'ACC'}, 'Location', 'northwest');
 
 
-    % Reconfigure position to maximize the size of the axes subplot
-    set(ax2, 'Outerposition', [0.463152688172043,0.050515163743915,0.483440860215054,0.456674652513498]);
-    set(ax2, 'Innerposition', [0.526,0.1007493755204,0.374666666666667,0.372189841798501]);
-    set(ax2, 'Position', [0.526,0.1007493755204,0.374666666666667,0.372189841798501]);
+        % Reconfigure position to maximize the size of the axes subplot
+        set(ax2, 'Outerposition', [0.327909122695361,0.066387350990074,0.637599836568569,0.390155230795661]);
+        set(ax2, 'Innerposition', [0.410797101449275,0.109304426377597,0.494139873340641,0.317976513098464]);
+        set(ax2, 'Position', [0.410797101449275,0.109304426377597,0.494139873340641,0.317976513098464]);
+
 
 
     %Define manual axis limits based on the observed range of motion
@@ -377,7 +396,7 @@ for cond=1 : num_conditions
             end
 
             % Plot PLD movement transition
-            subplotPLD = subplot(2, 2, [1, 3]);
+            subplotPLD = subplot(2, 3, [1, 4]);
 
             % Split the data into X, Y, and Z coordinates for each landmark
             x_coords = landmarks(1:3:end);
@@ -389,7 +408,7 @@ for cond=1 : num_conditions
             s.SizeData = 55;
 
             % Customize the plot appearance (e.g., title, labels, etc.)
-            title('Pose Landmark Detection', 'Color', "#FF0000", 'FontSize', 12);
+            title('Grand Average Motion Tracking', 'Color', "#FF0000", 'FontSize', 12);
             subtitle([num2str(EEG.times(i)), ' ms'], 'FontWeight','bold', 'FontSize', 11.5);
             xlabel('X', 'FontSize', 11, 'Color', 'k');
             ylabel('Y', 'FontSize', 11, 'Color', 'k');
@@ -465,35 +484,35 @@ for cond=1 : num_conditions
 
             % Add legend outside the loop
             if exist('highlightPatch', 'var')
-                legend(highlightPatch, highlightLabels, 'Location', 'none', 'FontSize', 10, 'Position', [0.356770833333334,0.141898405635892,0.061718749348074,0.040600666347415]);
+                legend(highlightPatch, highlightLabels, 'Location', 'southeastoutside', 'FontSize', 10);
             end
 
 
-            % If the current frame is the onset frame, add a horizontal line
-            if i == grand_avgOnsetTime_rev
-                % Get the range of x coordinates for the line
-                xRange = xlim(subplotPLD);
-                xExtendedRange = [xRange(1) - 0.2, xRange(2) + 0.2];  % Extend the range a bit on both sides
-
-                % Plot the line indicating the onset
-                line(xExtendedRange, [EyeY, EyeY], 'Color', 'k', 'LineWidth', 2, 'LineStyle', ':');
-                legend('Onset', 'Location', 'southeast', 'FontSize', 10);
-            end
-
-            % Add a horizontal line to 0ms (onset of the movement ACC)
-            if i == movement_onset
-                % Get the range of x coordinates for the line
-                xRange = xlim(subplotPLD);
-                xExtendedRange = [xRange(1) - 0.2, xRange(2) + 0.2];  % Extend the range a bit on both sides
-
-                % Plot the line indicating the onset
-                line(xExtendedRange, [WristY, WristY], 'Color', 'r', 'LineWidth', 2, 'LineStyle', '--');
-                %legend('Onset', 'Location', 'southeast', 'FontSize', 9);
-            end
+            % % If the current frame is the onset frame, add a horizontal line
+            % if i == grand_avgOnsetTime_rev
+            %     % Get the range of x coordinates for the line
+            %     xRange = xlim(subplotPLD);
+            %     xExtendedRange = [xRange(1) - 0.2, xRange(2) + 0.2];  % Extend the range a bit on both sides
+            %
+            %     % Plot the line indicating the onset
+            %     line(xExtendedRange, [EyeY, EyeY], 'Color', 'k', 'LineWidth', 2, 'LineStyle', ':');
+            %     legend('Onset', 'Location', 'southeast', 'FontSize', 10);
+            % end
+            %
+            % % Add a horizontal line to 0ms (onset of the movement ACC)
+            % if i == movement_onset
+            %     % Get the range of x coordinates for the line
+            %     xRange = xlim(subplotPLD);
+            %     xExtendedRange = [xRange(1) - 0.2, xRange(2) + 0.2];  % Extend the range a bit on both sides
+            %
+            %     % Plot the line indicating the onset
+            %     line(xExtendedRange, [WristY, WristY], 'Color', 'r', 'LineWidth', 2, 'LineStyle', '--');
+            %     %legend('Onset', 'Location', 'southeast', 'FontSize', 9);
+            % end
 
 
             % Set axis limits for consistent scaling
-            axis('equal');
+            axis('image');
 
 
             % %axis(subplotPLD, 'off'); % This turns off the axis lines, ticks, and background
@@ -539,14 +558,12 @@ for cond=1 : num_conditions
             % colormap(jet(250));
 
 
-            subplotTopo = subtightplot(2, 2, 2);
+            subplotTopo = subplot(2, 3, 2);
             topoplot(ERP(:, i), EEG.chanlocs, 'electrodes', 'off', 'maplimits', [-20 20], ...
                 'whitebk', 'on', ...
                 'shading', 'interp');
             %title([num2str(EEG.times(i)), ' [ms]'], 'FontSize', 10, 'VerticalAlignment', 'baseline');
             colormap(jet(250));
-
-
 
             % Title adjusted
             axesPosition = get(subplotTopo, 'Position');  % Get the position of the current axes
@@ -555,7 +572,7 @@ for cond=1 : num_conditions
             % Position the text at the bottom center of each subplot
             text('Parent', subplotTopo, 'String', [num2str(EEG.times(i)), ' ms'], ...
                 'Units', 'normalized', ...
-                'Position', [0.5, normalizedBottom + 0.45, 0], ... % You may need to adjust the 0.1 offset
+                'Position', [0.5, normalizedBottom - 0.55, 0], ... % You may need to adjust the 0.1 offset
                 'HorizontalAlignment', 'center', ...
                 'VerticalAlignment', 'top', ... % 'top' aligns the text at its top to the given Y position
                 'FontSize', 11.5, 'FontWeight', 'bold');  % Adjust font size as needed
@@ -569,11 +586,11 @@ for cond=1 : num_conditions
 
 
             if cond == 1
-                sgtitle('Grand Average Motion: Hits', 'Color', "#A2142F", 'Fontweight', 'bold'); % Super title
+                sgtitle('Grand Average Motion Tracking and ERP [N=27]: Hits', 'Color', "#A2142F", 'Fontweight', 'bold'); % Super title
             elseif cond ==2
-                sgtitle('Grand Average Motion: Misses', 'Color', "#A2142F", 'Fontweight', 'bold'); % Super title
+                sgtitle('Grand Average Motion Tracking and ERP [N=27]: Misses', 'Color', "#A2142F", 'Fontweight', 'bold'); % Super title
             elseif cond == 3
-                sgtitle('Grand Average Motion', 'Color', "#A2142F", 'Fontweight', 'bold'); % Super title
+                sgtitle('Grand Average Motion Tracking and ERP [N=27]', 'Color', "#A2142F", 'Fontweight', 'bold'); % Super title
             end
 
 
@@ -582,15 +599,15 @@ for cond=1 : num_conditions
             if i == (find(EEG.times==-200))  % A couple of frames before Peak ERP index
 
                 if cond == 1 % hit
-                    saveas(gcf, [outpath, 'Mind_grand_hoop_hit_BP', '.jpg']); % Save the figure as a PNG image
+                    % % saveas(gcf, [outpath, 'Mind_grand_hoop_hit_BP', '.jpg']); % Save the figure as a PNG image
                     saveas(gcf, [outpath, '\\group_analysis\\','Mind_grand_hoop_hit_BP', '.jpg']); % Save the figure as a PNG image
 
                 elseif cond == 2 % miss
-                    saveas(gcf, [outpath, 'Mind_grand_hoop_miss_BP', '.jpg']); % Save the figure as a PNG image
+                    % % saveas(gcf, [outpath, 'Mind_grand_hoop_miss_BP', '.jpg']); % Save the figure as a PNG image
                     saveas(gcf, [outpath, '\\group_analysis\\','Mind_grand_hoop_miss_BP', '.jpg']); % Save the figure as a PNG image
 
                 elseif cond == 3 % all
-                    saveas(gcf, [outpath, 'Mind_grand_hoop_BP', '.jpg']); % Save the figure as a PNG image
+                    % % saveas(gcf, [outpath, 'Mind_grand_hoop_BP', '.jpg']); % Save the figure as a PNG image
                     saveas(gcf, [outpath, '\\group_analysis\\','Mind_grand_hoop_BP', '.jpg']); % Save the figure as a PNG image
 
                 end
@@ -602,20 +619,21 @@ for cond=1 : num_conditions
             if i == (find(EEG.times==0))  % Basketball onset reference frame
 
                 if cond == 1 % hit
-                    saveas(gcf, [outpath, 'Mind_grand_hoop_hit_0', '.jpg']); % Save the figure as a PNG image
+                    % % saveas(gcf, [outpath, 'Mind_grand_hoop_hit_0', '.jpg']); % Save the figure as a PNG image
                     saveas(gcf, [outpath, '\\group_analysis\\','Mind_grand_hoop_hit_0', '.jpg']); % Save the figure as a PNG image
 
                 elseif cond == 2 % miss
-                    saveas(gcf, [outpath, 'Mind_grand_hoop_miss_0', '.jpg']); % Save the figure as a PNG image
+                    % % saveas(gcf, [outpath, 'Mind_grand_hoop_miss_0', '.jpg']); % Save the figure as a PNG image
                     saveas(gcf, [outpath, '\\group_analysis\\','Mind_grand_hoop_miss_0', '.jpg']); % Save the figure as a PNG image
 
                 elseif cond == 3 % all
-                    saveas(gcf, [outpath, 'Mind_grand_hoop_0', '.jpg']); % Save the figure as a PNG image
+                    % % saveas(gcf, [outpath, 'Mind_grand_hoop_0', '.jpg']); % Save the figure as a PNG image
                     saveas(gcf, [outpath, '\\group_analysis\\','Mind_grand_hoop_0', '.jpg']); % Save the figure as a PNG image
 
                 end
 
             end
+
 
             % Capture frame
             frame = getframe(gcf);
@@ -643,3 +661,4 @@ end
 
 
 %%
+
