@@ -11,9 +11,9 @@ clc, clear, close all;
 
 %% EEG data preparation
 
-mainpath = 'C:\Users\micua\Desktop\eeglab2023.0\'; % eeglab folder
-path = 'C:\Users\micua\OneDrive - Benemérita Universidad Autónoma de Puebla\NCP_Basketball\MediaPipe\';  % raw data
-outpath = 'C:\\Users\\micua\\OneDrive - Benemérita Universidad Autónoma de Puebla\\Oldenburg_University\\Thesis\\data_hoops\\';
+mainpath = 'C:\'; % eeglab folder
+path = 'C:\';  % raw data
+outpath = 'C:\\';
 files = dir( fullfile( path,'\*.xdf')); % listing data sets
 
 nochans = {'AccX','AccY','AccZ','GyroX','GyroY','GyroZ', ... % channels to be ignored

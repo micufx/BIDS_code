@@ -11,9 +11,9 @@ clc, clear, close all;
 
 %% Loading data
 
-mainpath = 'C:\Users\micua\Desktop\eeglab2023.0\'; % eeglab folder
-path = 'C:\Users\micua\OneDrive - Benemérita Universidad Autónoma de Puebla\NCP_Basketball\MediaPipe\';
-outpath = 'C:\\Users\\micua\\OneDrive - Benemérita Universidad Autónoma de Puebla\\Oldenburg_University\\Thesis\\data_hoops\\';
+mainpath = 'C:\'; % eeglab folder
+path = 'C:\';
+outpath = 'C:\\';
 files = dir( fullfile( path,'\*.xdf')); % listing data sets
 
 num_conditions = 3; % (Conditions and overall: 1=hit 2=miss 3=all)
