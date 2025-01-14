@@ -1,4 +1,6 @@
 *.asv
+*.set
+*.fdt
 
 # ignore data files
 data/raw/*
