@@ -1,15 +1,24 @@
 clc, clear, close all;
 
+%% Onset detection with wrist sensor (time reference set-point - plotting)
+
+% This code uses accelerometer data to detect the onset of the movement
+% based on wrist acceleration, saving the onset of the movement of each
+% trail of all participants. This first part of the procedure is in charge
+% to detect timestamps of reference (eye-wrist intersection).
+
+% Miguel Contreras-Altamirano, 2025
+
 %% Loading data
 
-mainpath = 'C:\Users\micua\Desktop\eeglab2023.0\'; % eeglab folder
-path = 'C:\Users\micua\OneDrive - Benemérita Universidad Autónoma de Puebla\NCP_Basketball\MediaPipe\';
-outpath = 'C:\\Users\\micua\\OneDrive - Benemérita Universidad Autónoma de Puebla\\Oldenburg_University\\Thesis\\data_hoops\\';
+mainpath = 'C:\'; % eeglab folder
+path = 'C:\';
+outpath = 'C:\\';
 files = dir( fullfile( path,'\*.xdf')); % listing data sets
 
 num_conditions = 3; % (Conditions and overall: 1=hit 2=miss 3=all)
 
-for sub = 1 : length(files)
+for sub = 1 : 1%length(files)
 
     participant = extractBefore(files(sub).name, '.xdf');
     out_subfold = [outpath, participant, '\\'];
@@ -113,36 +122,10 @@ for sub = 1 : length(files)
     for cond=1 : num_conditions
 
 
-        load([out_subfold, 'events_all_', participant,'.mat']); % Loading events file
-
-
-        if cond == 1 % 'hit'
-
-            load([out_subfold, 'ACC_sd_hit_', participant,'.mat']); % Loading accelerometer data
-            load([out_subfold, 'ACC_rev_hit_', participant,'.mat']); % Loading accelerometer data
-            load([out_subfold, 'ACC_dev_hit_', participant,'.mat']); % Loading accelerometer data
-
-        elseif cond == 2 % 'miss'
-
-            load([out_subfold, 'ACC_sd_miss_', participant,'.mat']); % Loading accelerometer data
-            load([out_subfold, 'ACC_rev_miss_', participant,'.mat']); % Loading accelerometer data
-            load([out_subfold, 'ACC_dev_miss_', participant,'.mat']); % Loading accelerometer data
-
-        elseif cond == 3  % % 'none'
-
-            load([out_subfold, 'ACC_sd_', participant,'.mat']); % Loading accelerometer data
-            load([out_subfold, 'ACC_rev_', participant,'.mat']); % Loading accelerometer data
-            load([out_subfold, 'ACC_dev_', participant,'.mat']); % Loading accelerometer data
-
-        end
-
+        load([out_subfold, 'events_MP_', participant,'.mat']); % Loading events file
 
 
         %% Defining conditions or general view
-
-        % Redifining new onsets based on Accelerometer data
-        onsetTimes = [events_ACC.time];
-        onsetFrames = [events_ACC.latency];
 
         % Divide PLD by conditions
         % Initialize empty vectors to store hit and miss onsets
@@ -153,12 +136,12 @@ for sub = 1 : length(files)
 
         % Loop through the event markers
 
-        for i = 1:length(events_ACC)
-            if strcmp(events_ACC(i).type, 'hit_ACC')
+        for i = 1:length(events_MP)
+            if strcmp(events_MP(i).type, 'hit_MP')
                 % If the event marker is '1', it's a hit
                 hitOnsets = [hitOnsets, onsetTimes(i)];
                 hitFrames = [hitFrames, onsetFrames(i)];
-            elseif strcmp(events_ACC(i).type, 'miss_ACC')
+            elseif strcmp(events_MP(i).type, 'miss_MP')
                 % If the event marker is '2', it's a miss
                 missOnsets = [missOnsets, onsetTimes(i)];
                 missFrames = [missFrames, onsetFrames(i)];
@@ -187,8 +170,7 @@ for sub = 1 : length(files)
         % % Interpolation
         % timeseries_acc = interp1(timestamps_acc, timeseries_acc', timestamps_eeg, 'linear')';
         % timestamps_acc = timestamps_eeg;
-        %
-        %
+        % 
         % % Find the time of those indexes in the ACC data
         % markers_time_acc = onsetTimes;
         % markers_sample_acc = onsetFrames;
@@ -208,44 +190,43 @@ for sub = 1 : length(files)
         numEvents = length(markers_sample_acc);
 
 
-
-        % Plot sensor data
-        fig = figure('units','normalized','outerposition', [0 0 1 1]);
-        plot(timestamps_acc, timeseries_acc(1,:), 'Color','#0072BD', 'LineWidth', 0.6);
-
-        hold on;
-
-        % Plot vertical dashed lines and color markers based on their labels
-        for i = 1: length(events_ACC)
-
-            % Plot vertical dashed lines
-            line_handle = plot([events_ACC(i).time, events_ACC(i).time], get(gca, 'YLim'), '--', 'Color', 'k');
-
-            % Plot vertical dashed lines
-            % plot([events(i).time, events(i).time], get(gca, 'YLim'), '--', 'Color', 'k');
-
-            % Color markers based on their labels
-            if strcmpi(events_ACC(i).type, 'miss')
-                scatter(events_ACC(i).time, 0, 'k', 'v', 'filled');
-            elseif strcmpi(events_ACC(i).type, 'hit')
-                scatter(events_ACC(i).time, 0, 'r', 'o', 'filled');
-            end
-        end
-
-        xlabel('Time (s)');
-        ylabel('Accelerometer [m/s]');
-        legend('Onsets', 'Location', 'Best');
-        title('Shooting Speed');
-        grid on;
-
-        % Set x-axis limits to focus on the relevant portion of the data
-        xlim([min(timestamps_acc), max(timestamps_acc)])
-
-        % Set y-axis limits to better visualize the data
-        %ylim([min(timeseries_acc(1,:)), max(timeseries_acc(3,:))]);
-        ylim([0 100]); % % mx_peak_acc= 174.6862 for sub_01 which is the highest, therefore I set the same scale to compare with the others
-
-        hold off; % Release hold
+        % % Plot sensor data
+        % fig = figure('units','normalized','outerposition', [0 0 1 1]);
+        % plot(timestamps_acc, timeseries_acc(1,:), 'Color','#0072BD', 'LineWidth', 0.6);
+        % 
+        % hold on;
+        % 
+        % % Plot vertical dashed lines and color markers based on their labels
+        % for i = 1: length(events_MP)
+        % 
+        %     % Plot vertical dashed lines
+        %     line_handle = plot([events_MP(i).time, events_MP(i).time], get(gca, 'YLim'), '--', 'Color', 'k');
+        % 
+        %     % Plot vertical dashed lines
+        %     % plot([events(i).time, events(i).time], get(gca, 'YLim'), '--', 'Color', 'k');
+        % 
+        %     % Color markers based on their labels
+        %     if strcmpi(events_MP(i).type, 'miss_MP')
+        %         scatter(events_MP(i).time, 0, 'k', 'v', 'filled');
+        %     elseif strcmpi(events_MP(i).type, 'hit_MP')
+        %         scatter(events_MP(i).time, 0, 'r', 'o', 'filled');
+        %     end
+        % end
+        % 
+        % xlabel('Time (s)');
+        % ylabel('Accelerometer [m/s]');
+        % legend('Onsets', 'Location', 'Best');
+        % title('Shooting Speed');
+        % grid on;
+        % 
+        % % Set x-axis limits to focus on the relevant portion of the data
+        % xlim([min(timestamps_acc), max(timestamps_acc)])
+        % 
+        % % Set y-axis limits to better visualize the data
+        % %ylim([min(timeseries_acc(1,:)), max(timeseries_acc(3,:))]);
+        % ylim([0 100]); % 
+        % 
+        % hold off; % Release hold
 
 
         %% Epoching around onset
@@ -281,18 +262,11 @@ for sub = 1 : length(files)
             end
         end
 
-
-        % Apply median filter to each epoch
-        % for i = 1:num_events
-        %     epochs(:, i) = medfilt1(epochs(:, i), 5); % 5 is the window size, adjust as needed
-        % end
-
-
         % Calculate the average across epochs
         average_epoch = mean(epochs, 3, 'omitnan');
 
-        time_vector = linspace(from*1000, to*1000, num_samples_in_epoch);
-
+        % time_vector = linspace(from*1000, to*1000, num_samples_in_epoch);
+        % 
         % % Plotting the average epoch
         % fig = figure('units','normalized','outerposition', [0 0 1 1]);
         % plot(time_vector, average_epoch(1:3,:), 'Color', '#0072BD', 'LineWidth', 2);
@@ -323,6 +297,7 @@ for sub = 1 : length(files)
             if start_sample >= 1 && end_sample <= length(accMagnitude)
                 epochs_accMagnitude_rev(:, i) = accMagnitude(start_sample:end_sample);
                 epochTimes_rev(:, i) = timestamps_acc(start_sample:end_sample); % Use actual timestamps for each event
+
             end
         end
 
@@ -352,6 +327,69 @@ for sub = 1 : length(files)
         % Define a threshold for movement onset, e.g., mean + 1 * standard deviation
         threshold = baselineMean + 1 * baselineStd;
 
+        % Initialize vectors to store movement onset latencies and timestamps
+        movementOnsets = NaN(1, trials);  % Store the onset frame relative to the epoch
+        movementOnsetTimestamps = NaN(1, trials);  % Store the corresponding onset timestamps
+        movementOnsetLatencies = NaN(1, trials);  % Store the onset latencies relative to original time series
+
+        for trial = 1:trials
+            % Reverse computation: start from time 0 (artificial onset) and move backwards
+            for t = find(epochTimes_rev(start_BP:artificial_onset) <= 0, 1, 'last'):-1:1
+                if epochs_accMagnitude_rev(t, trial) > threshold(trial)
+                    movementOnsets(trial) = t + 1;
+
+                    % Calculate corresponding timestamp
+                    event_reference_time = events_MP(trial).time;
+                    movementOnsetTimestamps(trial) = event_reference_time + epochTimes_rev(movementOnsets(trial)) / 1000;
+
+                    % Find closest latency
+                    [~, onset_latency_index] = min(abs(timestamps_acc - movementOnsetTimestamps(trial)));
+                    movementOnsetLatencies(trial) = onset_latency_index;
+                    break;
+                end
+            end
+        end
+
+        % Check if any onsets were detected
+        if all(isnan(movementOnsetTimestamps))
+            disp('No onsets were detected.');
+        else
+            disp('Movement onsets successfully detected!');
+        end
+
+        % Storing Onset Timestamps and Latencies (Relative to Global Time)
+
+        % Append the new onsets as separate events, as "hit_onset" or "miss_onset"
+        events_ACC = struct('type', {}, 'latency', {}, 'urevent', {}, 'duration', {}, 'time', {}, 'block', {});
+
+        for trial = 1:trials
+            if ~isnan(movementOnsetTimestamps(trial))  % If an onset was detected
+                if strcmpi(events_MP(trial).type, 'hit_MP')
+                    new_event_type = 'hit_ACC';
+                elseif strcmpi(events_MP(trial).type, 'miss_MP')
+                    new_event_type = 'miss_ACC';
+                else
+                    new_event_type = [events_MP(trial).type, '_onset'];
+                end
+
+                % Append the detected onset as a new event
+                new_event = struct(...
+                    'type', new_event_type, ...
+                    'latency', movementOnsetLatencies(trial), ...  % Latency relative to the original time series
+                    'urevent', events_MP(trial).urevent, ...
+                    'duration', events_MP(trial).duration, ...
+                    'time', movementOnsetTimestamps(trial), ...  % Global timestamp of the detected onset
+                    'block', events_MP(trial).block);
+
+                events_ACC(end + 1) = new_event;
+            end
+        end
+
+        % Combine original events and new onset events
+        all_events = [events_MP, events_ACC];
+
+        onsetTimes = [events_ACC.time];
+        onsetFrames = [events_ACC.latency];
 
 
         %% Plotting
@@ -392,25 +430,14 @@ for sub = 1 : length(files)
         fill([baselineStart, baselineStart, baselineEnd, baselineEnd], [ylimits(1), ylimits(2), ylimits(2), ylimits(1)], [0 0.4470 0.7410], 'FaceAlpha', 0.3, 'EdgeColor', 'none');
 
 
-        % Plot a vertical line at the average movement onset time
-        line([0, 0], ylim, 'Color', 'red', 'LineStyle', '--', 'LineWidth', 2.5);
+        % Calculate the average onset time
+        validOnsetIndices = ~isnan(movementOnsets);
+        RC_onsets = epochTimes_rev(movementOnsets(validOnsetIndices));
+        avgOnsetTime_rev = mean(RC_onsets);
 
 
-        % Reversing basketball onset
-        if avgOnsetTime_rev < 0
-            avgOnsetTime_rev = avgOnsetTime_rev*-1;
-        end
-
-
-        % Plot a vertical line at the average basketball onset time
-        line([avgOnsetTime_rev, avgOnsetTime_rev], ylim, 'Color', 'k', 'LineStyle', ':', 'LineWidth', 2);
-
-
-        % % Calculate the average onset time
-        % avgOnsetTime_movement = mean([new_events.time]) / -1000;
-        %
-        % % Plot a vertical line at the average onset time
-        % line([avgOnsetTime_movement, avgOnsetTime_movement], ylim, 'Color', 'b', 'LineStyle', '--', 'LineWidth', 3);
+        % Plot a vertical line at the average onset time
+        line([avgOnsetTime_rev, avgOnsetTime_rev], ylim, 'Color', 'red', 'LineStyle', '--', 'LineWidth', 2.5);
 
 
         % Displaying label condition
@@ -438,46 +465,35 @@ for sub = 1 : length(files)
         xlim([from*1000 to*1000]);
         grid on;
 
+       
 
-        %% Saving
+
+%% Saving
 
         if cond == 1 % 'hit'
 
             % Save it in .mat file
             save([out_subfold, 'ACC_rev_hit_', participant,'.mat'], 'avgAccMagnitude_rev', 'epochTimes_rev', 'sampling_rate_acc', ...
-                'epochs_accMagnitude_rev', 'baselineStd', 'upper_bound_rev', 'lower_bound_rev', 'avgOnsetTime_rev', 'RC_onsets',...
-                'timestamps_acc', 'timeseries_acc',...
-                'markers_time_acc', 'markers_sample_acc');
-
-            % Save the figure as a PNG image
-            saveas(acc_fig_rev, [out_subfold, 'ACC_fig_rev_hit_', participant, '.jpg']);
-            saveas(acc_fig_rev, [outpath, '\\group_analysis\\','ACC_fig_rev_hit_', participant, '.jpg']); % Save the figure as a PNG image
-
+            'epochs_accMagnitude_rev', 'baselineStd', 'upper_bound_rev', 'lower_bound_rev', 'avgOnsetTime_rev', 'RC_onsets', ...
+            'timestamps_acc', 'timeseries_acc',...
+            'markers_time_acc', 'markers_sample_acc');
 
         elseif cond == 2 % 'miss'
 
             % Save it in .mat file
             save([out_subfold, 'ACC_rev_miss_', participant,'.mat'], 'avgAccMagnitude_rev', 'epochTimes_rev', 'sampling_rate_acc', ...
-                'epochs_accMagnitude_rev', 'baselineStd', 'upper_bound_rev', 'lower_bound_rev', 'avgOnsetTime_rev', 'RC_onsets',...
-                'timestamps_acc', 'timeseries_acc',...
-                'markers_time_acc', 'markers_sample_acc');
-
-            % Save the figure as a PNG image
-            % saveas(acc_fig_rev, [out_subfold, 'ACC_fig_rev_miss_', participant, '.jpg']);
-            saveas(acc_fig_rev, [outpath, '\\group_analysis\\','ACC_fig_rev_miss_', participant, '.jpg']); % Save the figure as a PNG image
+            'epochs_accMagnitude_rev', 'baselineStd', 'upper_bound_rev', 'lower_bound_rev', 'avgOnsetTime_rev', 'RC_onsets',...
+            'timestamps_acc', 'timeseries_acc',...
+            'markers_time_acc', 'markers_sample_acc');
 
 
-        elseif cond == 3  % % 'none'
+       elseif cond == 3  % % 'none'
 
             % Save it in .mat file
             save([out_subfold, 'ACC_rev_', participant,'.mat'], 'avgAccMagnitude_rev', 'epochTimes_rev', 'sampling_rate_acc', ...
-                'epochs_accMagnitude_rev', 'baselineStd', 'upper_bound_rev', 'lower_bound_rev', 'avgOnsetTime_rev', 'RC_onsets',...
-                'timestamps_acc', 'timeseries_acc',...
-                'markers_time_acc', 'markers_sample_acc');
-
-            % Save the figure as a PNG image
-            saveas(acc_fig_rev, [out_subfold, 'ACC_fig_rev_', participant, '.jpg']);
-            saveas(acc_fig_rev, [outpath, '\\group_analysis\\','ACC_fig_rev_', participant, '.jpg']);
+            'epochs_accMagnitude_rev', 'baselineStd', 'upper_bound_rev', 'lower_bound_rev', 'avgOnsetTime_rev', 'RC_onsets',...
+            'timestamps_acc', 'timeseries_acc',...
+            'markers_time_acc', 'markers_sample_acc');
 
         end
 
@@ -552,14 +568,5 @@ end
 % broader analyses where smooth data is beneficial, interpolation might be
 % suitable.
 
-
 %%
-
-
-
-
-
-
-
-
 

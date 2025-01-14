@@ -1,10 +1,17 @@
 clc, clear, close all;
 
+%% Motion capture combined with mobile EEG (grand average plot)
+
+% This code creates a grand average plot of frame-by-frame motion and EEG 
+% combined data synchronously.
+
+% Miguel Contreras-Altamirano, 2025
+
 %% EEG data loading
 
-mainpath = 'C:\Users\micua\Desktop\eeglab2023.0\'; % eeglab folder
-path = 'C:\Users\micua\OneDrive - Benemérita Universidad Autónoma de Puebla\NCP_Basketball\MediaPipe\';
-outpath = 'C:\\Users\\micua\\OneDrive - Benemérita Universidad Autónoma de Puebla\\Oldenburg_University\\Thesis\\data_hoops\\';
+mainpath = 'C:\'; % eeglab folder
+path = 'C:\';
+outpath = 'C:\';
 files = dir( fullfile( path,'\*.xdf')); % listing data sets
 
 
@@ -14,14 +21,14 @@ num_conditions = 3; % (Conditions and overall: 1=hit 2=miss 3=all)
 %% Selecting participant
 
 
-for cond=1 : num_conditions
+for cond=1 : 1%num_conditions
 
 
     % Loading desired data
     if cond == 1 % 'hit'
         load([outpath, 'ACC_grand_avg_rev_hit', '.mat']); % Loading accelerometer data
-        load([outpath, 'ACC_grand_avg_dev_hit', '.mat']); % Loading accelerometer data
-        load([outpath, 'ACC_grand_avg_sd_hit', '.mat']); % Loading accelerometer data
+        % load([outpath, 'ACC_grand_avg_dev_hit', '.mat']); % Loading accelerometer data
+        % load([outpath, 'ACC_grand_avg_sd_hit', '.mat']); % Loading accelerometer data
         load([outpath , 'PLD_grand_avg_hit.mat'], 'averageTimeseriesMp', 'timestamps_mp');
 
         % Import EEG processed data
@@ -31,8 +38,8 @@ for cond=1 : num_conditions
 
     elseif cond == 2 % 'miss'
         load([outpath, 'ACC_grand_avg_rev_miss', '.mat']); % Loading accelerometer data
-        load([outpath, 'ACC_grand_avg_dev_miss', '.mat']); % Loading accelerometer data
-        load([outpath, 'ACC_grand_avg_sd_miss', '.mat']); % Loading accelerometer data
+        % load([outpath, 'ACC_grand_avg_dev_miss', '.mat']); % Loading accelerometer data
+        % load([outpath, 'ACC_grand_avg_sd_miss', '.mat']); % Loading accelerometer data
         load([outpath , 'PLD_grand_avg_miss.mat'], 'averageTimeseriesMp', 'timestamps_mp');
 
         % Import EEG processed data
@@ -42,8 +49,8 @@ for cond=1 : num_conditions
 
     elseif cond == 3  % % 'none'
         load([outpath, 'ACC_grand_avg_rev', '.mat']); % Loading accelerometer data
-        load([outpath, 'ACC_grand_avg_dev', '.mat']); % Loading accelerometer data
-        load([outpath, 'ACC_grand_avg_sd', '.mat']); % Loading accelerometer data
+        % load([outpath, 'ACC_grand_avg_dev', '.mat']); % Loading accelerometer data
+        % load([outpath, 'ACC_grand_avg_sd', '.mat']); % Loading accelerometer data
         load([outpath , 'PLD_grand_avg.mat'], 'averageTimeseriesMp', 'timestamps_mp');
 
         % Import EEG processed data
@@ -200,7 +207,7 @@ for cond=1 : num_conditions
     subplotERP = subtightplot_2(nRows, nCols, [7, 8, 9, 10, 11, 12]);
 
     % Define your y-limits
-    yLimits = [-35, 30];
+    yLimits = [-40, 30];
     ylim(yLimits);
 
     % Assigning y-limits to the data for better visualization
@@ -214,7 +221,7 @@ for cond=1 : num_conditions
     hold(subplotERP, 'on');
     for ch = 1:numElectrodes
         if ch ~= chan
-            plot(subplotERP, EEG.times, EEG.data_masked(ch, :), 'Color', colors(ch, :), 'LineWidth', 0.5);
+            other_chan = plot(subplotERP, EEG.times, EEG.data_masked(ch, :), 'Color', [0.8 0.8 0.8], 'LineWidth', 0.8);
         end
     end
 
@@ -230,7 +237,7 @@ for cond=1 : num_conditions
 
 
     % Plot the main ERP and GFP lines once
-    gfpLine = plot(subplotERP, EEG.times, GFP, 'Color', "#77AC30", 'LineWidth', 2.5, 'LineStyle', '-.');
+    %gfpLine = plot(subplotERP, EEG.times, GFP, 'Color', "#77AC30", 'LineWidth', 2.5, 'LineStyle', '-.');
     hold on;
     erpLine = plot(subplotERP, EEG.times, EEG.data_masked(chan,:), 'Color', "#0072BD", 'LineWidth', 3);
     uistack(erpLine, 'top');  % Make sure the ERP is on top
@@ -253,7 +260,7 @@ for cond=1 : num_conditions
     ylimits = ylim;
 
     % Fill between the baseline period with a light blue color and some transparency
-    fill([baselineStart, baselineStart, baselineEnd, baselineEnd], [ylimits(1), ylimits(2), ylimits(2), ylimits(1)], [0.4660 0.6740 0.1880], 'FaceAlpha', 0.2, 'EdgeColor', 'none');
+    %fill([baselineStart, baselineStart, baselineEnd, baselineEnd], [ylimits(1), ylimits(2), ylimits(2), ylimits(1)], [0.4660 0.6740 0.1880], 'FaceAlpha', 0.2, 'EdgeColor', 'none');
 
     % RP highlight transparency
     fill([baselineStart+1000, baselineStart+1000, baselineEnd+1000, baselineEnd+1000], [ylimits(1), ylimits(2), ylimits(2), ylimits(1)], [0.8500 0.3250 0.0980], 'FaceAlpha', 0.2, 'EdgeColor', 'none');
@@ -279,7 +286,7 @@ for cond=1 : num_conditions
     % peakPatch = patch(subplotERP, 'XData', [timeWindowStart, timeWindowStart, timeWindowEnd, timeWindowEnd], ...
     %     'YData', [min(ylim), max(ylim), max(ylim), min(ylim)], ...
     %     'FaceColor', 	"#D95319", 'FaceAlpha', 0.2, 'Edgecolor', 'none');
-    
+
     % Set y-axis limits and ticks for ERP/GFP data
     ylim(subplotERP, yLimits);
     yticks(subplotERP, yLimits(1):10:yLimits(2));
@@ -315,16 +322,15 @@ for cond=1 : num_conditions
     accOnset_rev = line(ax2, [grand_avgOnsetTime_rev grand_avgOnsetTime_rev], [accMin, accMax], 'Color', 'k', 'LineStyle', ':', 'LineWidth', 2);
 
     % Add a label to the line movement onset
-    text(grand_avgOnsetTime_rev, accMax, 'MP', 'Color', 'k', 'FontSize', 10, 'HorizontalAlignment', 'right', 'VerticalAlignment', 'top', 'Rotation', 90, 'FontWeight', 'bold');
+    %text(grand_avgOnsetTime_rev, accMax, 'MP', 'Color', 'k', 'FontSize', 10, 'HorizontalAlignment', 'right', 'VerticalAlignment', 'top', 'Rotation', 90, 'FontWeight', 'bold');
 
     % Adding line of the movement onset
     currentPointLine_PLD_onset = line(subplotERP, [0, 0], yLimits, 'Color', 'r', 'LineWidth', 2, 'Linestyle', '--');
 
     % Add a label to the line basketball onset
-    text(0, accMax, 'ACC', 'Color', 'r', 'FontSize', 10, 'HorizontalAlignment', 'right', 'VerticalAlignment', 'top', 'Rotation', 90, 'FontWeight', 'bold');
+    %text(0, accMax, 'ACC', 'Color', 'r', 'FontSize', 10, 'HorizontalAlignment', 'right', 'VerticalAlignment', 'top', 'Rotation', 90, 'FontWeight', 'bold');
 
 
-    
     % % Plot the onset marker off the Derivative Method
     % accOnset_dev = line(ax2, [onsetTime_acc_dev onsetTime_acc_dev], [accMin, accMax], 'Color', "#D95319", 'LineStyle', '--', 'LineWidth', 2.5);
     % % Add a label to the line
@@ -342,7 +348,7 @@ for cond=1 : num_conditions
 
 
     % Add legend to the ERP plot
-    legend(subplotERP, [erpLine, gfpLine, accLine], {'Cz', 'GFP', 'ACC'}, 'Location', 'northwest');
+    legend(subplotERP, [erpLine, accLine, other_chan], {'Cz', 'ACC', 'Channels'}, 'Location', 'northwest');
 
     % % Reconfigure position to maximize the size of the axes subplot
     % set(ax2, 'Outerposition', [0.517754838709677,0.070666259144418,0.429978494623656,0.397983502727505]);
@@ -367,8 +373,13 @@ for cond=1 : num_conditions
         'Left heel', 'Right heel', 'Left foot index', 'Right foot index'
         };
 
-    % Define colors for each body point
-    pointColors = lines(numLandmarks);
+    % Define a single color for all body clusters (gray)
+    uniformClusterColor = [0.5, 0.5, 0.5]; % Gray color for all body clusters
+    pointColors = repmat(uniformClusterColor, numLandmarks, 1); % Apply the same color to all landmarks
+
+    % Highlight the right wrist (17th landmark)
+    rightWristIndex = 17; % Index of the right wrist
+    pointColors(rightWristIndex, :) = [0, 0, 0]; % Set the color to black for the right wrist
 
     clusters = {
         [1, 2], [1, 3], [1, 4], [1, 5], [1, 6], [1, 7], [1, 8], [1, 9], [1, 10], [1, 11],... % Face to Nose connections
@@ -454,9 +465,17 @@ for cond=1 : num_conditions
         y_coords = landmarks(2:3:end);
         z_coords = landmarks(3:3:end);
 
-        % Create a 3D plot of the landmarks for each body part with unique colors
-        s = scatter3(x_coords, y_coords, z_coords, 30, pointColors, 'filled', 'o','MarkerEdgeColor','flat', 'MarkerEdgeColor','k');
-        s.SizeData = 50;
+        % Create a 3D plot of the landmarks with updated colors
+        s = scatter3(x_coords, y_coords, z_coords, 30, pointColors, 'filled', 'o', 'MarkerEdgeColor', 'k');
+        s.SizeData = 20; % Set default size
+
+        % Increase the size of the circle for the right wrist
+        hold on;
+        wristMarker = scatter3(x_coords(rightWristIndex), y_coords(rightWristIndex), z_coords(rightWristIndex), ...
+        50, 'k', 'filled', 'o', 'MarkerEdgeColor', 'k', 'LineWidth',2); % Larger black circle for the right wrist
+
+        % Ensure the wrist marker is on top
+        uistack(wristMarker, 'top'); % Moves the wrist marker to the top of all plotted elements
 
         % Customize the plot appearance (e.g., title, labels, etc.)
         %title([num2str(EEG.times(timePLD)), ' [ms]'], 'FontWeight','bold', 'FontSize', 10);
@@ -502,36 +521,35 @@ for cond=1 : num_conditions
         end
 
 
-
-        % Draw or update the circle detection around the wrist
-        for idx = 1:length(highlightIndices)
-            foton = highlightIndices(idx);
-
-            % Define coordinates for the corners of the shape around the point
-            if idx == 1  % Square for the eye
-                squareX = x_coords(foton) + highlightSize_square * [-1.5, 1.5, 1.5, -1.5, -1.5];
-                squareY = y_coords(foton) + highlightSize_square * [-1.5, -1.5, 1.5, 1.5, -1.5];
-                squareZ = z_coords(foton) * ones(1, 5);  % Keep the square in the same plane
-                highlightColor = highlightColorEye;  % Red for the eye
-
-                % Draw the square using patch
-                highlightPatch(idx) = patch(squareX, squareY, squareZ, 'FaceColor', 'none', 'EdgeColor', highlightColor, 'LineWidth', 2, 'Linestyle', '-.');
-
-            else  % Circle for the wrist
-
-                % Create a set of points that form a circle in 3D
-                theta = linspace(0, 2*pi, 50); % Number of points can be adjusted for smoothness
-                circleX = x_coords(foton) + highlightSize_circle* cos(theta);
-                circleY = y_coords(foton) + highlightSize_circle* sin(theta);
-                circleZ = z_coords(foton) * ones(size(circleX));  % Keep the circle in the same plane
-                highlightColor = highlightColorWrist;
-
-                % Draw the circle using patch
-                highlightPatch(idx) = patch(circleX, circleY, circleZ, 'FaceColor', 'none', 'EdgeColor', 'k', 'LineWidth', 2, 'Linestyle', '-');
-
-            end
-
-        end
+        % % Draw or update the circle detection around the wrist
+        % for idx = 1:length(highlightIndices)
+        %     foton = highlightIndices(idx);
+        %
+        %     % Define coordinates for the corners of the shape around the point
+        %     if idx == 1  % Square for the eye
+        %         squareX = x_coords(foton) + highlightSize_square * [-1.5, 1.5, 1.5, -1.5, -1.5];
+        %         squareY = y_coords(foton) + highlightSize_square * [-1.5, -1.5, 1.5, 1.5, -1.5];
+        %         squareZ = z_coords(foton) * ones(1, 5);  % Keep the square in the same plane
+        %         highlightColor = highlightColorEye;  % Red for the eye
+        %
+        %         % Draw the square using patch
+        %         %highlightPatch(idx) = patch(squareX, squareY, squareZ, 'FaceColor', 'none', 'EdgeColor', highlightColor, 'LineWidth', 2, 'Linestyle', '-.');
+        %
+        %     else  % Circle for the wrist
+        %
+        %         % Create a set of points that form a circle in 3D
+        %         theta = linspace(0, 2*pi, 50); % Number of points can be adjusted for smoothness
+        %         circleX = x_coords(foton) + highlightSize_circle* cos(theta);
+        %         circleY = y_coords(foton) + highlightSize_circle* sin(theta);
+        %         circleZ = z_coords(foton) * ones(size(circleX));  % Keep the circle in the same plane
+        %         highlightColor = highlightColorWrist;
+        %
+        %         % Draw the circle using patch
+        %         highlightPatch(idx) = patch(circleX, circleY, circleZ, 'FaceColor', 'none', 'EdgeColor', 'k', 'LineWidth', 2, 'Linestyle', '-');
+        %
+        %     end
+        %
+        % end
 
 
         % Add a horizontal line to 0ms (onset of the movement ACC)
@@ -574,40 +592,39 @@ for cond=1 : num_conditions
             'FontSize', 11, 'FontWeight', 'bold');  % Adjust font size as needed
 
 
-
-        if iPLD == 1
-
-            % Add legend outside the loop
-            if exist('highlightPatch', 'var')
-                legend(highlightPatch, highlightLabels, 'Location', 'southeast', 'FontSize', 10);
-            end
-
-            %axis(subplotPLD, 'off'); % This turns off the axis lines, ticks, and background
-            set(get(subplotPLD, 'XLabel'), 'Visible', 'on'); % Make the X-axis label visible
-            set(get(subplotPLD, 'YLabel'), 'Visible', 'on'); % Make the Y-axis label visible
-            set(get(subplotPLD, 'ZLabel'), 'Visible', 'on'); % Make the Z-axis label visible
-
-            % After plotting data and setting axis off
-            xlabelHandle = get(subplotPLD, 'XLabel');
-            ylabelHandle = get(subplotPLD, 'YLabel');
-            zlabelHandle = get(subplotPLD, 'ZLabel');
-
-            % Adjust label positions
-            % Note: you will need to adjust these values based on your specific plot and requirements
-            set(xlabelHandle, 'Position', get(xlabelHandle, 'Position') + [0.001, 0, 0.001]);
-            set(ylabelHandle, 'Position', get(ylabelHandle, 'Position') + [-0.1, -0.1, 0]);
-            set(zlabelHandle, 'Position', get(zlabelHandle, 'Position') + [0, 0, 1]);
-
-            % Then manually add text objects at the desired label positions
-            xlabelPos = get(get(subplotPLD, 'XLabel'), 'Position'); % Get current label position
-            ylabelPos = get(get(subplotPLD, 'YLabel'), 'Position'); % Get current label position
-            zlabelPos = get(get(subplotPLD, 'ZLabel'), 'Position'); % Get current label position
-
-            % Now, add the text objects
-            text(xlabelPos(1), xlabelPos(2), xlabelPos(3), 'X', 'HorizontalAlignment', 'center', 'VerticalAlignment', 'top', 'Color', 'k');
-            text(ylabelPos(1), ylabelPos(2), ylabelPos(3), 'Y', 'HorizontalAlignment', 'right', 'VerticalAlignment', 'middle', 'Color', 'k');
-            text(zlabelPos(1), zlabelPos(2), zlabelPos(3), 'Z', 'HorizontalAlignment', 'left', 'VerticalAlignment', 'middle', 'Color', 'k');
-        end
+        % if iPLD == 1
+        %
+        %     Add legend outside the loop
+        %     if exist('highlightPatch', 'var')
+        %         legend(highlightPatch, highlightLabels, 'Location', 'southeast', 'FontSize', 10);
+        %     end
+        %
+        %     %axis(subplotPLD, 'off'); % This turns off the axis lines, ticks, and background
+        %     set(get(subplotPLD, 'XLabel'), 'Visible', 'on'); % Make the X-axis label visible
+        %     set(get(subplotPLD, 'YLabel'), 'Visible', 'on'); % Make the Y-axis label visible
+        %     set(get(subplotPLD, 'ZLabel'), 'Visible', 'on'); % Make the Z-axis label visible
+        %
+        %     % After plotting data and setting axis off
+        %     xlabelHandle = get(subplotPLD, 'XLabel');
+        %     ylabelHandle = get(subplotPLD, 'YLabel');
+        %     zlabelHandle = get(subplotPLD, 'ZLabel');
+        %
+        %     % Adjust label positions
+        %     % Note: you will need to adjust these values based on your specific plot and requirements
+        %     set(xlabelHandle, 'Position', get(xlabelHandle, 'Position') + [0.001, 0, 0.001]);
+        %     set(ylabelHandle, 'Position', get(ylabelHandle, 'Position') + [-0.1, -0.1, 0]);
+        %     set(zlabelHandle, 'Position', get(zlabelHandle, 'Position') + [0, 0, 1]);
+        %
+        %     % Then manually add text objects at the desired label positions
+        %     xlabelPos = get(get(subplotPLD, 'XLabel'), 'Position'); % Get current label position
+        %     ylabelPos = get(get(subplotPLD, 'YLabel'), 'Position'); % Get current label position
+        %     zlabelPos = get(get(subplotPLD, 'ZLabel'), 'Position'); % Get current label position
+        %
+        %     % Now, add the text objects
+        %     text(xlabelPos(1), xlabelPos(2), xlabelPos(3), 'X', 'HorizontalAlignment', 'center', 'VerticalAlignment', 'top', 'Color', 'k');
+        %     text(ylabelPos(1), ylabelPos(2), ylabelPos(3), 'Y', 'HorizontalAlignment', 'right', 'VerticalAlignment', 'middle', 'Color', 'k');
+        %     text(zlabelPos(1), zlabelPos(2), zlabelPos(3), 'Z', 'HorizontalAlignment', 'left', 'VerticalAlignment', 'middle', 'Color', 'k');
+        % end
 
         % Make the axes lines transparent
         set(subplotPLD, 'XColor', 'none', 'YColor', 'none', 'ZColor', 'none');
@@ -627,18 +644,30 @@ for cond=1 : num_conditions
 
 
     if cond == 1
-        saveas(gcf, [outpath, 'Motion_grand_avg_hit', '.jpg']); % Save the figure as a PNG image
+
         saveas(gcf, [outpath, '\\group_analysis\\', 'Motion_grand_avg_hit', '.jpg']); % Save the figure as a PNG image
 
+        %save_fig(gcf,[outpath, '\\group_analysis\\',], 'Motion_grand_avg_hit');
+
+
     elseif cond ==2
-        saveas(gcf, [outpath, 'Motion_grand_avg_miss', '.jpg']); % Save the figure as a PNG image
+
         saveas(gcf, [outpath, '\\group_analysis\\','Motion_grand_avg_miss', '.jpg']); % Save the figure as a PNG image
 
-    elseif cond == 3
-        saveas(gcf, [outpath, 'Motion_grand_avg', '.jpg']); % Save the figure as a PNG image
-        saveas(gcf, [outpath, '\\group_analysis\\','Motion_grand_avg', '.jpg']); % Save the figure as a PNG image
-    end
+        %save_fig(gcf,[outpath, '\\group_analysis\\',], 'Motion_grand_avg_miss');
 
+
+    elseif cond == 3
+
+        saveas(gcf, [outpath, '\\group_analysis\\','Motion_grand_avg', '.jpg']); % Save the figure as a PNG image
+
+        save_fig(gcf,[outpath, '\\group_analysis\\',], 'Motion_grand_avg',...
+        'fontsize', 8, ...
+        'figsize', [35, 20], ...
+        'figtypes', {'.png', '.svg'},...
+        'dpi', 600);
+
+    end
 
 
     disp(['Condition ', num2str(cond), ' finalized!']);

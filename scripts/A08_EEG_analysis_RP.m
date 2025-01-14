@@ -1,10 +1,19 @@
 clc, clear, close all;
 
+%% EEG preprocessing (Readiness Potential)
+
+% This code processes EEG data. The artifact information obtained is
+% retrieved and use as parameters to reject and clean up EEG data.
+% Afterwards, the RP is calculated using only the pre-movement period (from
+% -2.5 to 0 sec).
+
+% Miguel Contreras-Altamirano, 2025
+
 %% EEG data preparation
 
-mainpath = 'C:\Users\micua\Desktop\eeglab2023.0\'; % eeglab folder
-path = 'C:\Users\micua\OneDrive - Benemérita Universidad Autónoma de Puebla\NCP_Basketball\MediaPipe\';  % raw data
-outpath = 'C:\\Users\\micua\\OneDrive - Benemérita Universidad Autónoma de Puebla\\Oldenburg_University\\Thesis\\data_hoops\\';
+mainpath = 'C:\'; % eeglab folder
+path = 'C:\';  % raw data
+outpath = 'C:\\';
 files = dir( fullfile( path,'\*.xdf')); % listing data sets
 
 nochans = {'AccX','AccY','AccZ','GyroX','GyroY','GyroZ', ... % channels to be ignored
@@ -108,7 +117,7 @@ for sub = 1 : length(files)
     sgtitle(['Sub. [', num2str(sub), ']'], 'Color',"#A2142F", 'Fontweight', 'bold'); % Super title
 
     saveas(gcf, [out_subfold, 'ERPs_comparison_RP_', participant, '.jpg']); % Save the figure as a PNG image
-    saveas(gcf, [outpath, '\\group_analysis\\','ERPs_comparison_RP_', participant, '.jpg']); % Save the figure as a PNG image
+    % saveas(gcf, [outpath, '\\group_analysis\\','ERPs_comparison_RP_', participant, '.jpg']); % Save the figure as a PNG image
 
 
     disp([participant, ' finalized!']);

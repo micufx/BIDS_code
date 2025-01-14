@@ -1,6 +1,9 @@
 clc, clear, close all;
 
-%% Point-biserial correlation
+%% Point-biserial correlation in Readiness Potential 
+
+% This code applies point-biserial correlation to the RP between
+% conditions.
 
 % The point-biserial correlation is a specific case of the Pearson
 % correlation coefficient that measures the strength and direction of the
@@ -22,12 +25,13 @@ clc, clear, close all;
 % strength of the relationship between the feature and the condition, while
 % the P_Value indicates the statistical significance of this relationship.
 
+% Miguel Contreras-Altamirano, 2025
 
 %% Settings data
 
-mainpath = 'C:\Users\micua\Desktop\eeglab2023.0\'; % eeglab folder
-path = 'C:\Users\micua\OneDrive - Benemérita Universidad Autónoma de Puebla\NCP_Basketball\MediaPipe\';
-outpath = 'C:\\Users\\micua\\OneDrive - Benemérita Universidad Autónoma de Puebla\\Oldenburg_University\\Thesis\\data_hoops\\';
+mainpath = 'C:\'; % eeglab folder
+path = 'C:\';
+outpath = 'C:\\';
 files = dir( fullfile( path,'\*.xdf')); % listing data sets
 
 channels = {'C3', 'Cz', 'C4', 'FC1','Fz','FC2'};   % Channels of interest

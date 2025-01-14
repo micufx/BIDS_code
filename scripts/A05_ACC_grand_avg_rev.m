@@ -1,10 +1,17 @@
 clc, clear, close all;
 
+%% Onset detection with wrist sensor 
+
+% This code calculates the grand average movement onset across
+% participants per condition.
+
+% Miguel Contreras-Altamirano, 2025
+
 %% Paths and Files
 
-mainpath = 'C:\Users\micua\Desktop\eeglab2023.0\'; % eeglab folder
-path = 'C:\Users\micua\OneDrive - Benemérita Universidad Autónoma de Puebla\NCP_Basketball\MediaPipe\';
-outpath = 'C:\\Users\\micua\\OneDrive - Benemérita Universidad Autónoma de Puebla\\Oldenburg_University\\Thesis\\data_hoops\\';
+mainpath = 'C:\'; % eeglab folder
+path = 'C:\';
+outpath = 'C:\\';
 files = dir(fullfile(path,'\*.xdf')); % listing data sets
 
 num_conditions = 3; % (Conditions and overall: 1=hit 2=miss 3=all)
@@ -177,7 +184,9 @@ for cond=1 : num_conditions
     ylimits = [0 180];
 
     % Fill between the baseline period with a light blue color and some transparency
-    fill([baselineStart_avg, baselineStart_avg, baselineEnd_avg, baselineEnd_avg], [ylimits(1), ylimits(2), ylimits(2), ylimits(1)], [0 0.4470 0.7410], 'FaceAlpha', 0.3, 'EdgeColor', 'none');
+    fill([baselineStart_avg, baselineStart_avg, baselineEnd_avg, baselineEnd_avg], [ylimits(1), ylimits(2), ylimits(2), ylimits(1)], [0.4660 0.6740 0.1880], 'FaceAlpha', 0.2, 'EdgeColor', 'none');  %[0 0.4470 0.7410]
+    % Add a label to BL
+    text(-2150, 10, 'Baseline', 'Color', 'k', 'FontSize', 10, 'HorizontalAlignment', 'right', 'VerticalAlignment', 'bottom','FontWeight', 'bold');
 
 
     % Calculate the average onset time
@@ -190,8 +199,14 @@ for cond=1 : num_conditions
     % Plot a vertical line at the average onset time
     line([0, 0], ylim, 'Color', 'red', 'LineStyle', '--', 'LineWidth', 2.5);
 
+    % Add a label to the line basketball onset
+    text(0, 98, 'Movement onset', 'Color', 'r', 'FontSize', 10, 'HorizontalAlignment', 'right', 'VerticalAlignment', 'top', 'Rotation', 90, 'FontWeight', 'bold');
+
     % Plot a vertical line at the average onset time
     line([grand_avgOnsetTime_rev, grand_avgOnsetTime_rev], ylim, 'Color', 'k', 'LineStyle', ':', 'LineWidth', 2);
+    
+    % Add a label to the line movement onset
+    text(grand_avgOnsetTime_rev, 98, 'Set-point onset', 'Color', 'k', 'FontSize', 10, 'HorizontalAlignment', 'right', 'VerticalAlignment', 'top', 'Rotation', 90, 'FontWeight', 'bold');
 
 
     % Displaying label condition
@@ -206,15 +221,15 @@ for cond=1 : num_conditions
 
     elseif cond == 3  % % 'none'
 
-        cond_label = 'All trials';
+        cond_label = 'Participants';
 
     end
 
 
     xlabel('Time [ms]', FontSize=15);
     ylabel('Acceleration Magnitude [m/s^2]', FontSize=15);
-    title('Onset Detection Based On Wrist Acceleration', FontSize=16);
-    subtitle('Grand Average [Reverse Computation Algorithm]', FontSize=16);
+    %title('Onset Detection Based On Wrist Acceleration', FontSize=16);
+    %subtitle('Grand Average [Reverse Computation Algorithm]', FontSize=16);
     legend([trials_avg, acc_line], {cond_label, 'Grand Mean'}, 'FontSize', 12, 'Location', 'northwest');
     ylim([0 100])
     xlim([from*1000 to*1000]);
@@ -232,9 +247,8 @@ for cond=1 : num_conditions
 
 
         % Save the figure as a PNG image
-        saveas(acc_fig_rev, [outpath, 'Grand_avg_ACC_rev_hit', '.jpg']);
+        %saveas(acc_fig_rev, [outpath, 'Grand_avg_ACC_rev_hit', '.jpg']);
         saveas(acc_fig_rev, [outpath, '\\group_analysis\\','Grand_avg_ACC_rev_hit', '.jpg']);
-
 
 
     elseif cond == 2 % 'miss'
@@ -244,8 +258,9 @@ for cond=1 : num_conditions
             'concatTimeseries', 'basketballOnsets');
 
         % Save the figure as a PNG image
-        saveas(acc_fig_rev, [outpath, 'Grand_avg_ACC_rev_miss', '.jpg']);
+        %saveas(acc_fig_rev, [outpath, 'Grand_avg_ACC_rev_miss', '.jpg']);
         saveas(acc_fig_rev, [outpath, '\\group_analysis\\','Grand_avg_ACC_rev_miss', '.jpg']);
+
 
 
     elseif cond == 3  % % 'none'
@@ -256,18 +271,20 @@ for cond=1 : num_conditions
             'concatTimeseries', 'basketballOnsets');
 
         % Save the figure as a PNG image
-        saveas(acc_fig_rev, [outpath, 'Grand_avg_ACC_rev', '.jpg']);
+        %saveas(acc_fig_rev, [outpath, 'Grand_avg_ACC_rev', '.jpg']);
         saveas(acc_fig_rev, [outpath, '\\group_analysis\\','Grand_avg_ACC_rev', '.jpg']);
+        save_fig(acc_fig_rev,[outpath, '\\group_analysis\\',], 'Grand_avg_ACC_rev', 'fontsize', 12);
+
 
 
     end
 
-    clear avgAccMagnitude_across_rev
-    clear epochTimes_rev
-    clear grand_avgOnsetTime_rev
-    clear concatTimeseries
-    clear basketballOnsets
-    clear concatTimeseries
+    % clear avgAccMagnitude_across_rev
+    % clear epochTimes_rev
+    % clear grand_avgOnsetTime_rev
+    % clear concatTimeseries
+    % clear basketballOnsets
+    % clear concatTimeseries
 
 end
 

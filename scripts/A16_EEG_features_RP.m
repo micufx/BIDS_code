@@ -1,51 +1,58 @@
 clc, clear, close all;
 
+%% Feature extraction of the Readiness Potential
+
+% This code extract important features of the Readiness Potential (mean and
+% SD) per conditions. 
+
+% Miguel Contreras-Altamirano, 2025
+
 %% EEG condition analysis
 
-mainpath = 'C:\Users\micua\Desktop\eeglab2023.0\'; % eeglab folder
-path = 'C:\Users\micua\OneDrive - Benemérita Universidad Autónoma de Puebla\NCP_Basketball\MediaPipe\';
-outpath = 'C:\\Users\\micua\\OneDrive - Benemérita Universidad Autónoma de Puebla\\Oldenburg_University\\Thesis\\data_hoops\\';
-files = dir( fullfile( path,'\*.xdf')); % listing data sets
+mainpath = 'C:\'; % eeglab folder
+path = 'C:\';
+outpath = 'C:\';
+files = dir(fullfile(path, '\*.xdf')); % listing data sets
 
-nochans = {'AccX','AccY','AccZ','GyroX','GyroY','GyroZ', ... % channels to be ignored
-    'QuatW','QuatX','QuatY','QuatZ'};
+nochans = {'AccX', 'AccY', 'AccZ', 'GyroX', 'GyroY', 'GyroZ', ...
+    'QuatW', 'QuatX', 'QuatY', 'QuatZ'}; % channels to be ignored
 
 conditions = {'hit', 'miss'};
 num_conditions = 2; % (Conditions: 1=hit 2=miss)
-channels = {'C3','Cz','C4', 'FC1','Fz','FC2'};   % Channels of interest
+channels = {'C3', 'Cz', 'C4', 'FC1', 'Fz', 'FC2'}; % Channels of interest
+cz_index = find(strcmp(channels, 'Cz')); % Find the index of Cz channel
 
+% Preallocate tables for means
+means_Cz_hits = [];
+means_Cz_miss = [];
 
 %% Selecting participant
 
-for sub = 1 : length(files)
+for sub = 1:length(files)
 
     participant = extractBefore(files(sub).name, '.xdf');
     out_subfold = [outpath, participant, '\\'];
     load([outpath, 'Info_EEG.mat']); % Loading channels file
 
-    for ch= 1 : length(channels)
+    for ch = 1:length(channels)
 
-        for cond=1 : num_conditions
-
+        for cond = 1:num_conditions
 
             if cond == 1  % 'hit'
                 % Import EEG processed data
-                [ALLEEG EEG CURRENTSET ALLCOM] = eeglab; % Open eeglab
-                EEG = pop_loadset('filename',['hoop_hit_RP_', participant, '.set'],'filepath', out_subfold); % Loading set file
+                [ALLEEG, EEG, CURRENTSET, ALLCOM] = eeglab; % Open eeglab
+                EEG = pop_loadset('filename', ['hoop_hit_RP_', participant, '.set'], 'filepath', out_subfold); % Loading set file
 
             elseif cond == 2  % 'miss'
                 % Import EEG processed data
-                [ALLEEG EEG CURRENTSET ALLCOM] = eeglab; % Open eeglab
-                EEG = pop_loadset('filename',['hoop_miss_RP_', participant, '.set'],'filepath', out_subfold); % Loading set file
+                [ALLEEG, EEG, CURRENTSET, ALLCOM] = eeglab; % Open eeglab
+                EEG = pop_loadset('filename', ['hoop_miss_RP_', participant, '.set'], 'filepath', out_subfold); % Loading set file
             end
-
 
             % Define the bins from -1500 to 0 ms, excluding baseline
             binEdges = [-1600, -1500, -1400, -1300, -1200, -1100, -1000, ...
                 -900, -800, -700, -600, -500, -400, -300, -200, -100, 0];
-
             nBins = length(binEdges) - 1; % Number of bins is now 15
-
 
             nChannels = size(EEG.data, 1);
             nEpochs = size(EEG.data, 3);
@@ -65,18 +72,17 @@ for sub = 1 : length(files)
                     for epoch = 1:nEpochs
                         data = EEG.data(channel, idxStart:idxEnd, epoch);
                         MEAN(channel, b, epoch) = mean(data, 'all');
-                        SD(channel, b, epoch) = std(data, 0, 'all');
+                        STD(channel, b, epoch) = std(data, 0, 'all');
                     end
                 end
             end
 
-
             % Erase the baseline since it is not helpful for prediction
             Mean_feat = MEAN;
-            Std_feat = SD;
+            Std_feat = STD;
 
-            Mean_feat (:, 1, :) = []; % Getting rid off baseline bin
-            Std_feat (:, 1, :) = []; % Getting rid off baseline bin
+            Mean_feat(:, 1, :) = []; % Getting rid off baseline bin
+            Std_feat(:, 1, :) = []; % Getting rid off baseline bin
 
             % Channel of interest
             chan = find(strcmp({EEG.chanlocs.labels}, channels{ch}));
@@ -85,7 +91,7 @@ for sub = 1 : length(files)
             Std_feat = Std_feat(chan, :, :);
 
             % Assuming Mean_feat and Std_feat are [1 x bins(15) x epochs]
-            [nChannels, nBins, nEpochs] = size(Mean_feat);  % Adjusted for your dimensions
+            [nChannels, nBins, nEpochs] = size(Mean_feat); % Adjusted for your dimensions
 
             % Preallocate arrays for features
             features = zeros(nEpochs, nBins * 2); % For 15 bins of mean and 15 bins of std, total 30 columns per epoch
@@ -98,7 +104,6 @@ for sub = 1 : length(files)
                 % Combine mean and std features for this epoch into one row
                 features(epoch, :) = [mean_features_epoch, std_features_epoch];
             end
-
 
             % Create condition and label arrays
             if cond == 1  % 'hit'
@@ -115,55 +120,59 @@ for sub = 1 : length(files)
             columnNamesMean = arrayfun(@(x) ['Bin-' num2str(x) '-Mean'], 1:nBins, 'UniformOutput', false);
             columnNamesStd = arrayfun(@(x) ['Bin-' num2str(x) '-SD'], 1:nBins, 'UniformOutput', false);
 
+            % Generate column names for each bin
+            sub_label = cell(1, length(files));
+            for sub_idx = 1:length(files)
+                sub_label{sub_idx} = ['Sub_' num2str(sub_idx)];
+            end
+
             % Combine the column names
             columnNames = [columnNamesMean, columnNamesStd];
 
-
             if cond == 1  % 'hit'
-
                 % Create the final table
                 hit_Table = array2table(features, 'VariableNames', columnNames);
                 hit_Table.Condition = shot_cond;
                 hit_Table.Label = shot_labels;
-
             elseif cond == 2  % 'miss'
-
                 % Create the final table
                 miss_Table = array2table(features, 'VariableNames', columnNames);
                 miss_Table.Condition = shot_cond;
                 miss_Table.Label = shot_labels;
-
             end
 
-            clear EEG
-            clear MEAN
-            clear SD
+            % If Cz channel, add to participant mean tables
+            if strcmp(channels{ch}, 'Cz')
+                participant_mean = mean(squeeze(Mean_feat), 2); % Calculate mean across epochs
+                if cond == 1  % 'hit'
+                    means_Cz_hits = [means_Cz_hits; participant_mean']; % Append participant mean
+                elseif cond == 2  % 'miss'
+                    means_Cz_miss = [means_Cz_miss; participant_mean']; % Append participant mean
+                end
+            end
 
+            clear EEG MEAN STD
 
-        end   % end of loop conditions
-
+        end % end of loop conditions
 
         % Now concatenate
         features_Table = vertcat(hit_Table, miss_Table);
 
-
         % Save it in .mat file
-        save([out_subfold, participant, '_features_RP_', channels{ch}, '.mat'],'features_Table');
+        save([out_subfold, participant, '_features_RP_', channels{ch}, '.mat'], 'features_Table');
 
-
-        % clear features_Table
-
-
-    end  % end of loop channels
-
+    end % end of loop channels
 
     disp([participant, ' finalized!']);
+end % end of loop subjects
 
 
-end  % end of loop subjects
+means_Cz_hits = array2table(means_Cz_hits, 'VariableNames', columnNamesMean, 'RowNames', sub_label);
+means_Cz_miss = array2table(means_Cz_miss, 'VariableNames', columnNamesMean, 'RowNames', sub_label);
 
 
+%% Save Cz means tables
 
-%%
-
-
+% Save it in .mat file
+save([outpath, 'means_Cz_hits', '.mat'], 'means_Cz_hits');
+save([outpath, 'means_Cz_miss', '.mat'], 'means_Cz_miss');

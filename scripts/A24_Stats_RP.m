@@ -1,10 +1,18 @@
 clc, clear, close all;
 
+%% Statistical information of the Readiness Potential
+
+% This code saves in a table the statistical results and critical
+% information of the parameterized Readiness Potential
+
+% Miguel Contreras-Altamirano, 2025
+
+
 %% EEG data loading
 
-mainpath = 'C:\Users\micua\Desktop\eeglab2023.0\'; % eeglab folder
-path = 'C:\Users\micua\OneDrive - Benemérita Universidad Autónoma de Puebla\NCP_Basketball\MediaPipe\';  % raw data
-outpath = 'C:\\Users\\micua\\OneDrive - Benemérita Universidad Autónoma de Puebla\\Oldenburg_University\\Thesis\\data_hoops\\';
+mainpath = 'C:\'; % eeglab folder
+path = 'C:\';  % raw data
+outpath = 'C:\\';
 files = dir( fullfile( path,'\*.xdf')); % listing data sets
 
 num_conditions = 3; % (Conditions and overall: 1=hit 2=miss 3=all)
@@ -47,7 +55,7 @@ for sub = 1 : length(files)
 
 
         % Readiness potential range
-        start_BP = find(EEG.times== -2500);
+        start_BP = find(EEG.times== -1500); % RP onset
         end_BP = find(EEG.times== 0);
 
         % % If the onset does not equal any values of the EEG.times because
@@ -146,7 +154,7 @@ T.RP_SE = SE';
 
 % T.Basketball_onset = cell2mat(T.Basketball_onset);
 % T.Accuracy = cell2mat(T.Accuracy);
-T.Subject_ID = cell2mat(T.Subject_ID);
+% T.Subject_ID = cell2mat(T.Subject_ID);
 
 T.RP_max_all = cell2mat(T.RP_max_all);
 T.RP_max_hits = cell2mat(T.RP_max_hits);
@@ -160,104 +168,105 @@ T.RP_SE_hits = cell2mat(T.RP_SE_hits);
 T.RP_SE_misses = cell2mat(T.RP_SE_misses);
 T.RP_SE = cell2mat(T.RP_SE);
 
+%%
 
-%% Independent Samples Test [Hits vs Misses] in [Cz]
-
-% Initialize the table to store your results
-results_conditions = table('Size', [0 10], 'VariableTypes', ...
-    {'string', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double'}, ...
-    'VariableNames', {'Participant', 'Mean_RP_Hits', 'Mean_RP_Misses', ...
-    'SE_Hits', 'SE_Misses', 'T_Value', 'df', 'P_Value', 'Cohens_d', 'Test_type'});
-
-% Iterate over each participant
-for i =1:height(T)
-
-    % Extract the individual observations for the current participant
-    hits_observations = mean_observations_hits{i};
-    misses_observations = mean_observations_misses{i};
-
-    % Calculate means for hits and misses
-    mean_hits = mean(hits_observations);
-    mean_misses = mean(misses_observations);
-
-    % Calculate the pooled standard deviation for Cohen's d
-    pooled_std = sqrt(((std(hits_observations)^2 * (length(hits_observations) - 1)) + ...
-        (std(misses_observations)^2 * (length(misses_observations) - 1))) / ...
-        (length(hits_observations) + length(misses_observations) - 2));
-
-
-    % Check normality for hits
-    [~, p_shapiro_hits] = lillietest(hits_observations);
-    normality_p_values_hits(i) = p_shapiro_hits;
-
-    % Check normality for misses
-    [~, p_shapiro_misses] = lillietest(misses_observations);
-    normality_p_values_misses(i) = p_shapiro_misses;
-
-    % Check homogeneity of variances between hits and misses
-    [p_levene, stats] = vartestn([hits_observations; misses_observations],...
-        [ones(size(hits_observations)); 2*ones(size(misses_observations))], ...
-        'TestType', 'LeveneAbsolute', ...
-        'Display', 'off');
-    levenes_p_values(i) = p_levene;
-
-
-
-    % Perform the t-test if normality and homogeneity assumptions are not violated
-    if p_shapiro_hits > 0.05 && p_shapiro_misses > 0.05 && p_levene > 0.05 && i<1 % Somthing unreal so it doesn't do Parametric test
-
-        % Both groups are normally distributed with equal variances
-        [h, p, ci, stats] = ttest2(hits_observations, misses_observations); % Parametric Independent Samples T-Test
-        type_test(i) = stats.tstat;
-        p_values(i) = p;
-
-        test_labels_matrix(i) = "T-test";
-        disp(['Parametric test used for channel [Cz] / Participant [', num2str(i), ']: [T-test]']);
-
-    else
-
-        % Use a non-parametric test if assumptions are violated
-        [p,h,stats] = ranksum(hits_observations, misses_observations); % Non-Parametric Independent Samples Mann-Whitney U test
-        type_test(i) = stats.zval;
-        p_values(i) = p;
-
-        test_labels_matrix(i) = "Mann-Whitney U test";
-        disp(['Non-Parametric test used for channel [Cz] / Participant [', num2str(i), ']: [Mann-Whitney U test]']);
-
-    end
-
-
-    % Calculate Cohen's d for independent samples
-    cohens_d = (mean_hits - mean_misses) / pooled_std;
-
-    % Calculate degrees of freedom
-    df = length(hits_observations) + length(misses_observations) - 2;
-
-    % Add results to the table
-    results_conditions = [results_conditions; {T.Subject_ID(i, :), mean_hits, mean_misses, ...
-        T.RP_SE_hits(i), T.RP_SE_misses(i), type_test(i), df, p, cohens_d, test_labels_matrix{i}}];
-end
-
-
-% Coorection for multiple comparisons --> Reduce the likelihood of type I errors (false positives)
-
-% Holm-Bonferroni correction to the p-values in the results table
-% adjusted_p_values_vector = holm_bonferroni(p_values_vector);   % --> More conservative
-
-% Bonferroni correction
-% numComparisons = num_bins * num_channels;  % Total number of comparisons
-% corrected_p_threshold = p_threshold / numComparisons;  % Adjusted p-value threshold
-
-% FDR correction using Benjamini-Hochberg procedure
-p_values = results_conditions.P_Value; % Extract p-values
-p_fdr_pvalues = mafdr(p_values, 'BHFDR', true);  % --> Less conservative
-
-% Add corrected p-values to results table
-results_conditions.P_Value = p_fdr_pvalues; % Replace the corrected p_values
-
-% Significant differences between conditions
-p_threshold = 0.05;
-sig_p_values_conditions = [results_conditions.P_Value <= p_threshold];
+% %% Independent Samples Test [Hits vs Misses] in [Cz]
+% 
+% % Initialize the table to store your results
+% results_conditions = table('Size', [0 10], 'VariableTypes', ...
+%     {'string', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double'}, ...
+%     'VariableNames', {'Participant', 'Mean_RP_Hits', 'Mean_RP_Misses', ...
+%     'SE_Hits', 'SE_Misses', 'T_Value', 'df', 'P_Value', 'Cohens_d', 'Test_type'});
+% 
+% % Iterate over each participant
+% for i =1:height(T)
+% 
+%     % Extract the individual observations for the current participant
+%     hits_observations = mean_observations_hits{i};
+%     misses_observations = mean_observations_misses{i};
+% 
+%     % Calculate means for hits and misses
+%     mean_hits = mean(hits_observations);
+%     mean_misses = mean(misses_observations);
+% 
+%     % Calculate the pooled standard deviation for Cohen's d
+%     pooled_std = sqrt(((std(hits_observations)^2 * (length(hits_observations) - 1)) + ...
+%         (std(misses_observations)^2 * (length(misses_observations) - 1))) / ...
+%         (length(hits_observations) + length(misses_observations) - 2));
+% 
+% 
+%     % Check normality for hits
+%     [~, p_shapiro_hits] = lillietest(hits_observations);
+%     normality_p_values_hits(i) = p_shapiro_hits;
+% 
+%     % Check normality for misses
+%     [~, p_shapiro_misses] = lillietest(misses_observations);
+%     normality_p_values_misses(i) = p_shapiro_misses;
+% 
+%     % Check homogeneity of variances between hits and misses
+%     [p_levene, stats] = vartestn([hits_observations; misses_observations],...
+%         [ones(size(hits_observations)); 2*ones(size(misses_observations))], ...
+%         'TestType', 'LeveneAbsolute', ...
+%         'Display', 'off');
+%     levenes_p_values(i) = p_levene;
+% 
+% 
+% 
+%     % Perform the t-test if normality and homogeneity assumptions are not violated
+%     if p_shapiro_hits > 0.05 && p_shapiro_misses > 0.05 && p_levene > 0.05 && i<1 % Somthing unreal so it doesn't do Parametric test
+% 
+%         % Both groups are normally distributed with equal variances
+%         [h, p, ci, stats] = ttest2(hits_observations, misses_observations); % Parametric Independent Samples T-Test
+%         type_test(i) = stats.tstat;
+%         p_values(i) = p;
+% 
+%         test_labels_matrix(i) = "T-test";
+%         disp(['Parametric test used for channel [Cz] / Participant [', num2str(i), ']: [T-test]']);
+% 
+%     else
+% 
+%         % Use a non-parametric test if assumptions are violated
+%         [p,h,stats] = ranksum(hits_observations, misses_observations); % Non-Parametric Independent Samples Mann-Whitney U test
+%         type_test(i) = stats.zval;
+%         p_values(i) = p;
+% 
+%         test_labels_matrix(i) = "Mann-Whitney U test";
+%         disp(['Non-Parametric test used for channel [Cz] / Participant [', num2str(i), ']: [Mann-Whitney U test]']);
+% 
+%     end
+% 
+% 
+%     % Calculate Cohen's d for independent samples
+%     cohens_d = (mean_hits - mean_misses) / pooled_std;
+% 
+%     % Calculate degrees of freedom
+%     df = length(hits_observations) + length(misses_observations) - 2;
+% 
+%     % Add results to the table
+%     results_conditions = [results_conditions; {T.Subject_ID(i, :), mean_hits, mean_misses, ...
+%         T.RP_SE_hits(i), T.RP_SE_misses(i), type_test(i), df, p, cohens_d, test_labels_matrix{i}}];
+% end
+% 
+% 
+% % Coorection for multiple comparisons --> Reduce the likelihood of type I errors (false positives)
+% 
+% % Holm-Bonferroni correction to the p-values in the results table
+% % adjusted_p_values_vector = holm_bonferroni(p_values_vector);   % --> More conservative
+% 
+% % Bonferroni correction
+% % numComparisons = num_bins * num_channels;  % Total number of comparisons
+% % corrected_p_threshold = p_threshold / numComparisons;  % Adjusted p-value threshold
+% 
+% % FDR correction using Benjamini-Hochberg procedure
+% p_values = results_conditions.P_Value; % Extract p-values
+% p_fdr_pvalues = mafdr(p_values, 'BHFDR', true);  % --> Less conservative
+% 
+% % Add corrected p-values to results table
+% results_conditions.P_Value = p_fdr_pvalues; % Replace the corrected p_values
+% 
+% % Significant differences between conditions
+% p_threshold = 0.05;
+% sig_p_values_conditions = [results_conditions.P_Value <= p_threshold];
 
 
 %% One-Sample Test [Readiness Potential vs 0] in [Cz]
@@ -316,7 +325,7 @@ for i = 1:height(T)
 
     % Add results to the table
     results_RP = [results_RP; {T.Subject_ID(i, :), mean_rp, se_rp, ...
-        zval(i), signedrank(i), df, p, cohens_d, test_labels_matrix{i}}];
+    zval(i), signedrank(i), df, p, cohens_d, test_labels_matrix{i}}];
 end
 
 % FDR correction using Benjamini-Hochberg procedure
@@ -345,6 +354,6 @@ save([outpath, 'results_conditions','.mat'], 'results_conditions', 'mean_observa
 
 % Save it in .mat file
 save([outpath, 'results_RP','.mat'], 'results_RP');
-writetable(results_RP,  [outpath,'results_RP.xlsx']);
+%writetable(results_RP,  [outpath,'results_RP.xlsx']);
 
 %% 

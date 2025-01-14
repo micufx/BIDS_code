@@ -1,13 +1,21 @@
 clc, clear, close all;
 
+%% Explained variance of the Readiness Potential 
+
+% This code calculates the explained variance of the human pose features 
+% between conditions.
+
+% Miguel Contreras-Altamirano, 2025
+
+
 %% Settings data
-mainpath = 'C:\Users\micua\Desktop\eeglab2023.0\'; % eeglab folder
-path = 'C:\Users\micua\OneDrive - Benemérita Universidad Autónoma de Puebla\NCP_Basketball\MediaPipe\';
-outpath = 'C:\\Users\\micua\\OneDrive - Benemérita Universidad Autónoma de Puebla\\Oldenburg_University\\Thesis\\data_hoops\\';
+mainpath = 'C:\'; % eeglab folder
+path = 'C:\';
+outpath = 'C:\\';
 files = dir(fullfile(path, '\*.xdf')); % listing data sets
 
 % Landmark times to analyze
-Landmarks = -2:0.1:1; % Consecutive landmarks
+Landmarks = -2.5:0.1:1; % Consecutive landmarks
 
 numParticipants = length(files); % number of participants
 numFeatures = 99; % number of features
@@ -68,9 +76,10 @@ for fig_idx = 1:numFigures
     % First plot for the first landmark in the pair
     subplot(1, 2, 1);  % First subplot for the figure
     imagesc(R_Squared_Matrices_PLD{lm_1_idx});
-    colorbar; % Adds a colorbar to interpret values
-    title(['Explained Variance of PLD [R^2]'], 'FontSize', 12);
-    subtitle(['Trials prior movement / [Landmark at ', num2str(Landmarks(lm_1_idx) * 1000), ' ms]'], 'FontSize', 12);
+    cb = colorbar; % Create the colorbar
+    ylabel(cb, 'R^2', 'FontWeight', 'bold', 'FontSize', 11); % Label for colorbar
+    title(['Pose Landmarks Differences [Hits vs Misses]'], 'FontSize', 12);
+    subtitle(['Explained Variance [RMS] / [Landmark at ', num2str(Landmarks(lm_1_idx) * 1000), ' ms]'], 'FontSize', 12);
     xlabel('Participants', 'FontWeight', 'bold', 'FontSize', 11.5);
     ylabel('Features', 'FontWeight', 'bold', 'FontSize', 11.5);
     axis tight; % Adjusts the axis limits to the data
@@ -86,9 +95,10 @@ for fig_idx = 1:numFigures
     if lm_2_idx <= length(Landmarks)
         subplot(1, 2, 2);  % Second subplot for the figure
         imagesc(R_Squared_Matrices_PLD{lm_2_idx});
-        colorbar; % Adds a colorbar to interpret values
-        title(['Explained Variance of PLD [R^2]'], 'FontSize', 12);
-        subtitle(['Trials prior movement / [Landmark at ', num2str(Landmarks(lm_2_idx) * 1000), ' ms]'], 'FontSize', 12);
+        cb = colorbar; % Create the colorbar
+        ylabel(cb, 'R^2', 'FontWeight', 'bold', 'FontSize', 11); % Label for colorbar
+        title(['Pose Landmarks Differences [Hits vs Misses]'], 'FontSize', 12);
+        subtitle(['Explained Variance [RMS] / [Landmark at ', num2str(Landmarks(lm_2_idx) * 1000), ' ms]'], 'FontSize', 12);
         xlabel('Participants', 'FontWeight', 'bold', 'FontSize', 11.5);
         ylabel('Features', 'FontWeight', 'bold', 'FontSize', 11.5);
         axis tight; % Adjusts the axis limits to the data

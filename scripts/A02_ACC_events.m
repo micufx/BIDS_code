@@ -1,15 +1,25 @@
 clc, clear, close all;
 
+%% Onset detection with wrist sensor (movement onset)
+
+% This code detects the movement onset based on the Reverse Copmputational
+% Method algorythm using the previously time references detected by the
+% human pose motion and with help of the motion sensor attached to the
+% wrist of participants.
+
+% Miguel Contreras-Altamirano, 2025
+
+
 %% Loading data
 
-mainpath = 'C:\Users\micua\Desktop\eeglab2023.0\'; % eeglab folder
-path = 'C:\Users\micua\OneDrive - Benemérita Universidad Autónoma de Puebla\NCP_Basketball\MediaPipe\';
-outpath = 'C:\\Users\\micua\\OneDrive - Benemérita Universidad Autónoma de Puebla\\Oldenburg_University\\Thesis\\data_hoops\\';
+mainpath = 'C:\'; % eeglab folder
+path = 'C:\';
+outpath = 'C:\\';
 files = dir( fullfile( path,'\*.xdf')); % listing data sets
 
 num_conditions = 3; % (Conditions and overall: 1=hit 2=miss 3=all)
 
-for sub = 1 : length(files)
+for sub = 1 : 1%length(files)
 
     participant = extractBefore(files(sub).name, '.xdf');
     out_subfold = [outpath, participant, '\\'];
@@ -110,7 +120,7 @@ for sub = 1 : length(files)
     disp(['ACC recording: ', num2str(length_minutes_acc), ' minutes']);
 
 
-    for cond=1 : num_conditions
+    for cond=3 : num_conditions
 
 
         load([out_subfold, 'events_MP_', participant,'.mat']); % Loading events file
@@ -158,28 +168,17 @@ for sub = 1 : length(files)
         %% Syncronizing onset times by Euclidean distance
 
 
-        % % Interpolation
-        % timeseries_acc = interp1(timestamps_acc, timeseries_acc', timestamps_eeg, 'linear')';
-        % timestamps_acc = timestamps_eeg;
-        % 
-        % % Find the time of those indexes in the ACC data
-        % markers_time_acc = onsetTimes;
-        % markers_sample_acc = onsetFrames;
-        % numEvents = length(markers_sample_acc);
-
-
-        % Optional
-        % Using interpolation to get the exact match for onset times
-        idx_nearest_acc = interp1(timestamps_acc, 1:length(timestamps_acc), onsetTimes, 'nearest', 'extrap');
-
-        % % % Find the index of the nearest timestamp for each onset time
-        % idx_nearest_acc = arrayfun(@(onset) find(abs(timestamps_acc - onset) == min(abs(timestamps_acc - onset))), onsetTimes);
+        % Interpolation
+        timeseries_acc = interp1(timestamps_acc, timeseries_acc', timestamps_eeg, 'linear')';
+        timestamps_acc = timestamps_eeg;
 
         % Find the time of those indexes in the ACC data
-        markers_time_acc = timestamps_acc(idx_nearest_acc);
-        markers_sample_acc = idx_nearest_acc;
+        markers_time_acc = onsetTimes;
+        markers_sample_acc = onsetFrames;
         numEvents = length(markers_sample_acc);
 
+
+        %% Plotting onsets
 
         % % Plot sensor data
         % fig = figure('units','normalized','outerposition', [0 0 1 1]);
@@ -215,7 +214,7 @@ for sub = 1 : length(files)
         % 
         % % Set y-axis limits to better visualize the data
         % %ylim([min(timeseries_acc(1,:)), max(timeseries_acc(3,:))]);
-        % ylim([0 100]); % 
+        % ylim([0 100]); % % mx_peak_acc= 174.6862 for sub_01 which is the highest, therefore I set the same scale to compare with the others
         % 
         % hold off; % Release hold
 
@@ -256,8 +255,8 @@ for sub = 1 : length(files)
         % Calculate the average across epochs
         average_epoch = mean(epochs, 3, 'omitnan');
 
-        % time_vector = linspace(from*1000, to*1000, num_samples_in_epoch);
-        % 
+        time_vector = linspace(from*1000, to*1000, num_samples_in_epoch);
+
         % % Plotting the average epoch
         % fig = figure('units','normalized','outerposition', [0 0 1 1]);
         % plot(time_vector, average_epoch(1:3,:), 'Color', '#0072BD', 'LineWidth', 2);
@@ -305,11 +304,72 @@ for sub = 1 : length(files)
 
         % Define epoch times (in ms) for illustration purposes (relative to time reference)
         epochTimes_rev = linspace(-2500, 1000, dataPoints); % Adjust this according to your data
-        start_BP = find(epochTimes_rev == -2000);  % Baseline start
+        start_BP = find(epochTimes_rev == -2000);  % Baseline
         artificial_onset = find(epochTimes_rev == 0);  % Time reference
 
-        % Identify indices for the baseline period
-        baselineIndices = epochTimes_rev >= -2500 & epochTimes_rev <= -2000;
+        %% Dynamic baseline correction
+
+        % Initial baseline period (default)
+        baseline_start_default = -2500;
+        baseline_end_default = -2000;
+
+        % Define a larger window for dynamic baseline search
+        search_start = -2500;
+        search_end = -1500;
+
+        % Initial baseline check: check the standard deviation in the default baseline range
+        default_baselineIndices = find(epochTimes_rev >= baseline_start_default & epochTimes_rev <= baseline_end_default);
+        default_bl = mean(epochs_accMagnitude_rev(default_baselineIndices));
+        default_baseline_std = std(epochs_accMagnitude_rev(default_baselineIndices, :), 0, 1);
+
+        % Calculate a dynamic threshold based on the data itself
+        % Use median or percentiles to avoid outliers influencing too much
+        artifact_threshold = max(default_baseline_std) * 3;  % You can tweak the multiplier
+
+
+        % Define a larger baseline period for searching (EXCLUDING default baseline)
+        search_baselineIndices = find(epochTimes_rev >= search_start & epochTimes_rev <= search_end & ...
+            (epochTimes_rev < baseline_start_default | epochTimes_rev > baseline_end_default));
+
+        % Calculate the sliding standard deviation over the search period using a window
+        window_size = 500;  % Window size in ms
+        sliding_std = movstd(mean(epochs_accMagnitude_rev(search_baselineIndices, :), 2), window_size);
+
+        % Identify the most stable section in the search window by looking for the minimum std
+        [~, min_std_idx] = min(sliding_std);
+
+        % Check if the default baseline is too noisy
+        if default_bl > artifact_threshold
+            disp('Artifacts detected in the default baseline, searching for a new steady period...');
+
+            % Force selection of the minimum std window OUTSIDE the default range
+            prob_bl_start = epochTimes_rev(search_baselineIndices(min_std_idx));
+            prob_bl_end = prob_bl_start + window_size;
+
+            % Ensure the new baseline is within valid search range
+            if prob_bl_end > search_end
+                prob_bl_end = search_end;
+            end
+
+            % Debugging step: Check if it's actually moving away from the default
+            if prob_bl_start >= baseline_start_default && prob_bl_end <= baseline_end_default
+                disp('New baseline overlaps with the default baseline. Forcing a shift.');
+                prob_bl_start = -1500;  % Force new baseline if stuck in the default
+                prob_bl_end = -1000;    % You can adjust these values as needed
+            end
+
+            disp(['New baseline set between ', num2str(prob_bl_start), ' ms and ', num2str(prob_bl_end), ' ms']);
+        else
+            % If no artifacts are detected, use the default baseline
+            prob_bl_start = baseline_start_default;
+            prob_bl_end = baseline_end_default;
+            disp('Default baseline used, no significant artifacts detected.');
+        end
+
+        % Use the identified baseline for calculations
+        baselineIndices = epochTimes_rev >= prob_bl_start & epochTimes_rev <= prob_bl_end;
+
+        %% Reverse Computational Method
 
         % Calculate the baseline mean and standard deviation for each trial
         baselineMean = mean(epochs_accMagnitude_rev(baselineIndices, :), 1);
@@ -339,14 +399,26 @@ for sub = 1 : length(files)
                     break;
                 end
             end
+
+            % If no onset was detected, replace NaN with the original event onset from events_MP
+            if isnan(movementOnsets(trial))
+                disp(['No movement onset detected for trial ', num2str(trial), '. Using events_MP onset.']);
+                movementOnsets(trial) = find(epochTimes_rev == 0);  % You can set this to the appropriate index for time 0
+                movementOnsetTimestamps(trial) = events_MP(trial).time;  % Use the time from events_MP
+                movementOnsetLatencies(trial) = events_MP(trial).latency;  % Use the frame/latency from events_MP
+            end
+
         end
 
         % Check if any onsets were detected
         if all(isnan(movementOnsetTimestamps))
             disp('No onsets were detected.');
         else
-            disp('Movement onsets successfully detected!');
+            disp(['Movement onsets for participant ', num2str(sub) ' successfully detected!']);
         end
+
+
+        %% Creating events file
 
         % Storing Onset Timestamps and Latencies (Relative to Global Time)
 
@@ -383,110 +455,12 @@ for sub = 1 : length(files)
         onsetFrames = [events_ACC.latency];
 
 
-        %% Plotting
-
-        % Constants for plotting
-        colors = lines(length(epochs_accMagnitude_rev));   % Use hsv, jet or any other colormap
-        % Mix with white to lighten the colors
-        lightenFactor = 0.5;  % Adjust this to make the color lighter (closer to 1 makes it lighter)
-        colors = colors + lightenFactor * (1 - colors);
-
-        % Plot each trial as a semi-transparent line
-        acc_fig_rev = figure('units','normalized','outerposition', [0 0 1 1]); hold on;
-        for trial = 1:size(epochs_accMagnitude_rev, 2)
-            trials = plot(epochTimes_rev, epochs_accMagnitude_rev(:, trial), 'Color', colors(trial, :), 'LineWidth', 1);
-        end
-
-        % Calculate the average acceleration across all trials
-        avgAccMagnitude_rev = mean(epochs_accMagnitude_rev, 2);
-
-        % Plot the average acceleration
-        acc_line = plot(epochTimes_rev, avgAccMagnitude_rev, 'LineStyle', '-', ...
-            'Marker', 'o', 'MarkerIndices', 1:10:length(avgAccMagnitude_rev),'LineWidth', 2.5, 'Color', 'k');
-
-        % Calculate the upper and lower bounds of the shaded area
-        upper_bound_rev = avgAccMagnitude_rev + baselineStd;
-        lower_bound_rev = avgAccMagnitude_rev - baselineStd;
-
-        % Assuming you have the figure already open and have plotted the trials
-
-        % Highlight the baseline period
-        baselineStart = -2500; % adjust to your baseline start time
-        baselineEnd = -2000; % adjust to your baseline end time
-
-        % Get the current y-axis limits
-        ylimits = [0 180];
-
-        % Fill between the baseline period with a light blue color and some transparency
-        fill([baselineStart, baselineStart, baselineEnd, baselineEnd], [ylimits(1), ylimits(2), ylimits(2), ylimits(1)], [0 0.4470 0.7410], 'FaceAlpha', 0.3, 'EdgeColor', 'none');
-
-
-        % Calculate the average onset time
-        validOnsetIndices = ~isnan(movementOnsets);
-        RC_onsets = epochTimes_rev(movementOnsets(validOnsetIndices));
-        avgOnsetTime_rev = mean(RC_onsets);
-
-
-        % Plot a vertical line at the average onset time
-        line([avgOnsetTime_rev, avgOnsetTime_rev], ylim, 'Color', 'red', 'LineStyle', '--', 'LineWidth', 2.5);
-
-
-        % Displaying label condition
-
-        if cond == 1 % 'hit'
-
-            cond_label = 'Hits';
-
-        elseif cond == 2 % 'miss'
-
-            cond_label = 'Misses';
-
-        elseif cond == 3  % % 'none'
-
-            cond_label = 'All trials';
-
-        end
-
-        xlabel('Time [ms]');
-        ylabel('Acceleration Magnitude [m/s^2]');
-        title('Onset Detection Based On Wrist Acceleration');
-        subtitle(['Sub. [', num2str(sub), '] / ', '[Reverse Computation Algorithm]']);
-        legend([trials, acc_line], {cond_label, 'Mean'}, 'Location', 'northwest');
-        ylim(ylimits)
-        xlim([from*1000 to*1000]);
-        grid on;
-
-       
-
-
-%% Saving
-
-        if cond == 1 % 'hit'
-
-            % Save it in .mat file
-            save([out_subfold, 'ACC_rev_hit_', participant,'.mat'], 'avgAccMagnitude_rev', 'epochTimes_rev', 'sampling_rate_acc', ...
-            'epochs_accMagnitude_rev', 'baselineStd', 'upper_bound_rev', 'lower_bound_rev', 'avgOnsetTime_rev', 'RC_onsets', ...
-            'timestamps_acc', 'timeseries_acc',...
-            'markers_time_acc', 'markers_sample_acc');
-
-        elseif cond == 2 % 'miss'
-
-            % Save it in .mat file
-            save([out_subfold, 'ACC_rev_miss_', participant,'.mat'], 'avgAccMagnitude_rev', 'epochTimes_rev', 'sampling_rate_acc', ...
-            'epochs_accMagnitude_rev', 'baselineStd', 'upper_bound_rev', 'lower_bound_rev', 'avgOnsetTime_rev', 'RC_onsets',...
-            'timestamps_acc', 'timeseries_acc',...
-            'markers_time_acc', 'markers_sample_acc');
-
-
-       elseif cond == 3  % % 'none'
-
-            % Save it in .mat file
-            save([out_subfold, 'ACC_rev_', participant,'.mat'], 'avgAccMagnitude_rev', 'epochTimes_rev', 'sampling_rate_acc', ...
-            'epochs_accMagnitude_rev', 'baselineStd', 'upper_bound_rev', 'lower_bound_rev', 'avgOnsetTime_rev', 'RC_onsets',...
-            'timestamps_acc', 'timeseries_acc',...
-            'markers_time_acc', 'markers_sample_acc');
-
-        end
+        %% Saving
+        % 
+        % % Save the combined events structure
+        % save([out_subfold, 'events_all_', participant, '.mat'], 'all_events', 'events_MP', 'events_ACC',...
+        %     'timeseries_mp', 'timestamps_mp', 'timeseries_eeg', 'timestamps_eeg', ...
+        %     'sampling_rate_eeg', 'sampling_rate_mp', 'sampling_rate_acc');
 
 
 
@@ -511,6 +485,10 @@ for sub = 1 : length(files)
 
     clear timeseries_acc
     clear timestamps_acc
+    clear timeseries_mp
+    clear timestamps_mp
+    clear timeseries_eeg
+    clear timestamps_eeg
 
 
 end
@@ -560,4 +538,3 @@ end
 % suitable.
 
 %%
-
