@@ -1,6 +1,6 @@
-# Mobile Basketball EEG Project
+# Motion capture & mobile EEG 
 
-This project involves analyzing EEG data collected during basketball activities. The scripts in this repository are designed to process and analyze the data stored in the `data` directory using MATLAB.
+This project involves analyzing motion and EEG data collected during basketball free-throw shooting. The scripts in this repository are designed to process and analyze the data stored in the `data` directory using MATLAB.
 
 ## Directory Structure
 
