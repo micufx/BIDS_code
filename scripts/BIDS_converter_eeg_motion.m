@@ -124,7 +124,7 @@ for sub = 1: length(files)
     
 
     % Generate README file
-    README = sprintf('The experiment included 27 participants. \n- Miguel Contreras-Altamirano (December, 2024)');
+    README = sprintf('The experiment included 27 participants. \n- Miguel Contreras-Altamirano (December, 2025)');
 
     % Call data2bids for EEG
     data2bids(cfg, data_eeg);
