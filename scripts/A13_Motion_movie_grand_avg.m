@@ -1,5 +1,12 @@
 clc, clear, close all;
 
+%% Motion capture combined with mobile EEG (grand average movie)
+
+% This code creates a grand average movie of frame-by-frame motion and EEG 
+% combined data synchronously.
+
+% Miguel Contreras-Altamirano, 2025
+
 %% EEG data loading
 
 mainpath = 'C:\Users\micua\Desktop\eeglab2023.0\'; % eeglab folder
@@ -98,8 +105,13 @@ for cond=1 : num_conditions
         'Left heel', 'Right heel', 'Left foot index', 'Right foot index'
         };
 
-    % Define colors for each body point
-    pointColors = lines(numLandmarks);
+    % Define a single color for all body clusters (gray)
+    uniformClusterColor = [0.5, 0.5, 0.5]; % Gray color for all body clusters
+    pointColors = repmat(uniformClusterColor, numLandmarks, 1); % Apply the same color to all landmarks
+
+    % Highlight the right wrist (17th landmark)
+    rightWristIndex = 17; % Index of the right wrist
+    pointColors(rightWristIndex, :) = [0, 0, 0]; % Set the color to black for the right wrist
 
     clusters = {
         [1, 2], [1, 3], [1, 4], [1, 5], [1, 6], [1, 7], [1, 8], [1, 9], [1, 10], [1, 11],... % Face to Nose connections
@@ -157,7 +169,7 @@ for cond=1 : num_conditions
     numElectrodes = size(EEG.data, 1);
     colors = lines(numElectrodes);   % Use hsv, jet or any other colormap
     % Mix with white to lighten the colors
-    lightenFactor = 0.5;  % Adjust this to make the color lighter (closer to 1 makes it lighter)
+    lightenFactor = 0.8;  % Adjust this to make the color lighter (closer to 1 makes it lighter)
     colors = colors + lightenFactor * (1 - colors);
 
     BP_acc = find(EEG.times < grand_avgOnsetTime_rev);
@@ -183,7 +195,7 @@ for cond=1 : num_conditions
     % globalMin = min(min(EEG.data(:)));  % Min across all channels and all times
 
     % Define your y-limits
-    yLimits = [-35, 30];
+    yLimits = [-40, 30];
     ylim(yLimits);
 
     % Assigning y-limits to the data for better visualization
@@ -203,23 +215,71 @@ for cond=1 : num_conditions
     % Plot ERP Image (Top Center)
     subplotERPImage = subplot(2, 3, 3);
 
-    erp_data = squeeze(all_trials_data(chan, :, :));  % Squeeze the data to remove singleton dimensions and transpose
+    % erp_data = squeeze(all_trials_data(chan, :, :));  % Squeeze the data to remove singleton dimensions and transpose
+    % sortvar = zeros(1, size(erp_data, 2));  % One value per trial (876 trials in this case)
+  
+    % erpimage(erp_data, [], EEG.times, 'Cz', 1, 1,...
+    % 'yerplabel', {'Grand Average ERP'},'erp', 'off', 'cbar', 'off','cbar_title', '\muV',...
+    % 'vert', [grand_avgOnsetTime_rev], ...
+    % 'topo', {chan, EEG.chanlocs, EEG.chaninfo},...
+    % 'caxis', [-40 40], 'avg_type', 'Gaussian', 'vert', grand_avgOnsetTime_rev,...
+    % 'img_trialax_label', {'All trials'}, 'img_trialax_ticks', [0 : 500 :size(erp_data,2)]);
+      
+    % % Step 2: Apply smoothing
+    % smooth_window = 20; % Adjust for slight smoothing if needed
+    % smoothed_data = movmean(erp_data, smooth_window, 2); % Smooth across time
+
+
+    % Step 1: Extract the data for the channel of interest
+    latency = EEG.times;
+    erp_data = squeeze(EEG.data(chan, :, :));  % Squeeze the data to remove singleton dimensions and transpose
     sortvar = zeros(1, size(erp_data, 2));  % One value per trial (876 trials in this case)
 
-    erpimage(erp_data, [], EEG.times, 'Cz', 1, 1,...
-    'yerplabel', {'Grand Average ERP'},'erp', 'off', 'cbar', 'off','cbar_title', '\muV',...
-    'vert', [grand_avgOnsetTime_rev], ...
-    'topo', {chan, EEG.chanlocs, EEG.chaninfo},...
-    'caxis', [-40 40], 'avg_type', 'Gaussian', 'vert', grand_avgOnsetTime_rev,...
-    'img_trialax_label', {'All trials'}, 'img_trialax_ticks', [0 : 500 :size(erp_data,2)]);
+    % % Step 3: Use erpimage
+    % erpimage(erp_data, [], EEG.times, 'Cz', 1, 1,...
+    %     'yerplabel', {'Grand Average ERP'},'erp', 'off', 'cbar', 'off','cbar_title', '\muV',...
+    %     'vert', [grand_avgOnsetTime_rev], ...
+    %     'topo', {chan, EEG.chanlocs, EEG.chaninfo},...
+    %     'caxis', [-20 20],...
+    %     'vert', grand_avgOnsetTime_rev,... %         'avg_type', 'Gaussian',...
+    %     'img_trialax_label', {'Participants'}, 'img_trialax_ticks', [0 : 1 :size(erp_data,2)]);
+
+    % Step 1: Define parameters
+    clipping_range = [-20 20]; % Match the caxis range in erpimage
+
+    % Step 2: Plot with imagesc
+    imagesc(latency, 1:size(erp_data, 2), erp_data'); % Transpose for correct orientation
+    set(gca, 'YDir', 'normal'); % Ensure correct orientation
+
+    % Step 3: Colormap and axis adjustments
+    colormap('jet'); % Similar to 'erpimage' colormap
+    % c = colorbar('Ticks',[-20 -10 0 10 20]);  % Replace minValue and maxValue with your actual min and max
+    % c.Label.String = 'Amplitude [\muV]';
+    % c.Label.FontSize = 14;
+    caxis(clipping_range); % Set color limits to match erpimage
+    set(gca, 'FontSize', 13);
+
+    % Step 4: Add vertical lines and labels
+    hold on;
+    xline(0, 'r--', 'LineWidth', 2.5); % Onset line
+    xline(grand_avgOnsetTime_rev, 'k:', 'LineWidth', 2.5); % Additional onset lines if needed
+    xlabel('Time [ms]', 'FontSize', 16);
+    ylabel('Participants', 'FontSize', 16);
+    title(EEG.chanlocs(chan).labels, 'FontSize', 17);   % title('Grand Average Motion Tracking and ERP [N=26]', 'FontSize', 20);
+    %subtitle('Event Related Potential at [Cz]', 'FontSize', 19);
+
+    % Optional: Adjust Y-axis tick labels
+    yticks(1:size(erp_data, 2));
+    yticklabels(1:size(erp_data, 2)); % Adjust as per participant indexing
 
 
-    subplotTopo = subplot(2, 3, 2);
+
+    subplotTopo = subtightplot(2, 3, 2);
     c = colorbar('Ticks',[-20 -10 0 10 20]);
     %c.TickLabels = {'-', '+'};
     c.Label.String = 'Amplitude [\muV]';
-    c.Label.FontSize = 11;
-    c.Position = [0.419411530644227, 0.628246253633742, 0.004631856339674, 0.247492481203008]; % Set the colorbar position
+    c.Label.FontSize = 16;
+    c.Position = [0.383172034845905,0.609276063931848,0.004631856339674,0.247492481203008]; % Set the colorbar position
 
     subplotERP = subplot(2, 3, [5, 6]);
 
@@ -232,7 +292,7 @@ for cond=1 : num_conditions
     hold(subplotERP, 'on');
     for ch = 1:numElectrodes
         if ch ~= chan
-            plot(subplotERP, EEG.times, EEG.data_masked(ch, :), 'Color', colors(ch, :), 'LineWidth', 0.5);
+            other_chan = plot(subplotERP, EEG.times, EEG.data_masked(ch, :), 'Color', [0.8 0.8 0.8], 'LineWidth', 0.8);
         end
     end
 
@@ -255,22 +315,23 @@ for cond=1 : num_conditions
     ylimits = ylim;
 
     % Fill between the baseline period with a light blue color and some transparency
-    fill([baselineStart, baselineStart, baselineEnd, baselineEnd], [ylimits(1), ylimits(2), ylimits(2), ylimits(1)], [0.4660 0.6740 0.1880], 'FaceAlpha', 0.2, 'EdgeColor', 'none');
+    %fill([baselineStart, baselineStart, baselineEnd, baselineEnd], [ylimits(1), ylimits(2), ylimits(2), ylimits(1)], [0.4660 0.6740 0.1880], 'FaceAlpha', 0.2, 'EdgeColor', 'none');
 
     % RP highlight transparency
     fill([baselineStart+1500, baselineStart+1500, baselineEnd+2000, baselineEnd+2000], [ylimits(1), ylimits(2), ylimits(2), ylimits(1)], [0.8500 0.3250 0.0980], 'FaceAlpha', 0.2, 'EdgeColor', 'none');
 
     % Customize ERP axes
-    title(subplotERP, 'Grand Average Event Related Potential [ERP]', 'Color', "#0072BD", 'FontWeight', 'bold', 'FontSize', 12);
-    subtitle(subplotERP, [num2str(EEG.times(1)), ' [ms]'], 'FontWeight', 'bold', 'FontSize', 11.5);
-    ylabel(subplotERP, 'Amplitude [\muV]', 'FontSize', 11, 'Color', 'k');
-    xlabel(subplotERP, 'Time [ms]', 'FontSize', 11);
+    title(subplotERP, 'Grand Average ERP', 'Color', "#0072BD", 'FontWeight', 'bold', 'FontSize', 16);
+    subtitle(subplotERP, [num2str(EEG.times(1)), ' [ms]'], 'FontWeight', 'bold', 'FontSize', 16);
+    ylabel(subplotERP, 'Amplitude [\muV]', 'FontSize', 16, 'Color', 'k');
+    xlabel(subplotERP, 'Time [ms]', 'FontSize', 16);
     xlim(subplotERP, [EEG.times(1) EEG.times(end)]);
     ylim(subplotERP, yLimits);
     yticks(subplotERP, yLimits(1):10:yLimits(2));
     set(subplotERP, 'YDir', 'reverse');
     %grid(subplotERP, 'on');
     axis(subplotERP, 'tight');
+    set(gca, 'FontSize', 16);
 
     % Create patch for the highlight shadow once
     % peakPatch = patch(subplotERP, 'XData', [timeWindowStart, timeWindowStart, timeWindowEnd, timeWindowEnd], ...
@@ -295,7 +356,7 @@ for cond=1 : num_conditions
 
 
     % Plot the main ERP and GFP lines once
-    gfpLine = plot(EEG.times, GFP, 'Color', "#77AC30", 'LineWidth', 2.5, 'LineStyle', '-.');
+    %gfpLine = plot(EEG.times, GFP, 'Color', "#77AC30", 'LineWidth', 2.5, 'LineStyle', '-.');
     erpLine = plot(EEG.times, EEG.data_masked(chan,:), 'Color', "#0072BD", 'LineWidth', 3);
     uistack(erpLine, 'top');  % Make sure the ERP is on top
 
@@ -307,7 +368,9 @@ for cond=1 : num_conditions
     % Create a second axes for the ACC data that shares the same x-axis as subplotERP
     ax2 = axes('Position', subplotERP.Position, 'XAxisLocation', 'top', 'YAxisLocation', 'right', ...
         'Color', 'none', 'XColor', 'none', 'YColor', 'k', 'Parent', fig);
-    ylabel(ax2, 'Acceleration Magnitude [m/s^2]', 'FontSize', 11, 'Color', 'k');
+    set(gca, 'FontSize', 16);
+    ylabel(ax2, 'Acceleration Magnitude [m/s^2]', 'FontSize', 16, 'Color', 'k');
+    
     linkaxes([subplotERP ax2], 'x'); % Link the x-axes of both axes
 
     % Set the y-axis limits for the ACC data to show the full range
@@ -333,23 +396,23 @@ for cond=1 : num_conditions
     accOnset_rev = line(ax2, [grand_avgOnsetTime_rev grand_avgOnsetTime_rev], [accMin, accMax], 'Color', 'k', 'LineStyle', ':', 'LineWidth', 2);
 
     % Add a label to the line movement onset
-    text(grand_avgOnsetTime_rev, accMax, 'MP', 'Color', 'k', 'FontSize', 10, 'HorizontalAlignment', 'right', 'VerticalAlignment', 'top', 'Rotation', 90, 'FontWeight', 'bold');
+    %text(grand_avgOnsetTime_rev, accMax, 'MP', 'Color', 'k', 'FontSize', 10, 'HorizontalAlignment', 'right', 'VerticalAlignment', 'top', 'Rotation', 90, 'FontWeight', 'bold');
 
     % Adding line of the movement onset
     currentPointLine_PLD_onset = line(subplotERP, [0, 0], yLimits, 'Color', 'r', 'LineWidth', 2, 'Linestyle', '--');
 
     % Add a label to the line basketball onset
-    text(0, accMax, 'ACC', 'Color', 'r', 'FontSize', 10, 'HorizontalAlignment', 'right', 'VerticalAlignment', 'top', 'Rotation', 90, 'FontWeight', 'bold');
+    %text(0, accMax, 'ACC', 'Color', 'r', 'FontSize', 10, 'HorizontalAlignment', 'right', 'VerticalAlignment', 'top', 'Rotation', 90, 'FontWeight', 'bold');
 
 
     % Add legend to the ERP plot
-    legend(subplotERP, [erpLine, gfpLine, accLine], {EEG.chanlocs(chan).labels, 'GFP', 'ACC'}, 'Location', 'northwest');
+    legend(subplotERP, [erpLine, accLine, other_chan], {EEG.chanlocs(chan).labels, 'ACC', 'Channels'}, 'Location', 'northwest','FontSize', 16);
 
 
-        % Reconfigure position to maximize the size of the axes subplot
-        set(ax2, 'Outerposition', [0.327909122695361,0.066387350990074,0.637599836568569,0.390155230795661]);
-        set(ax2, 'Innerposition', [0.410797101449275,0.109304426377597,0.494139873340641,0.317976513098464]);
-        set(ax2, 'Position', [0.410797101449275,0.109304426377597,0.494139873340641,0.317976513098464]);
+    % Reconfigure position to maximize the size of the axes subplot
+    set(ax2, 'Outerposition', [0.327909122695361,0.063478233815164,0.637599836568569,0.416601750567577]);
+    set(ax2, 'Innerposition', [0.410797101449275,0.109304426377597,0.494139873340641,0.339530426712575]);
+    set(ax2, 'Position', [0.410797101449275,0.109304426377597,0.494139873340641,0.339530426712575]);
 
 
 
@@ -407,9 +470,17 @@ for cond=1 : num_conditions
             s = scatter3(x_coords, y_coords, z_coords, 30, pointColors, 'filled', 'o','MarkerEdgeColor','flat', 'MarkerEdgeColor','k');
             s.SizeData = 55;
 
+            % Increase the size of the circle for the right wrist
+            hold on;
+            wristMarker = scatter3(x_coords(rightWristIndex), y_coords(rightWristIndex), z_coords(rightWristIndex), ...
+                300, 'k', 'filled', 'o', 'MarkerEdgeColor', 'k', 'LineWidth',2); % Larger black circle for the right wrist
+
+            % Ensure the wrist marker is on top
+            uistack(wristMarker, 'top'); % Moves the wrist marker to the top of all plotted elements
+
             % Customize the plot appearance (e.g., title, labels, etc.)
-            title('Grand Average Motion Tracking', 'Color', "#FF0000", 'FontSize', 12);
-            subtitle([num2str(EEG.times(i)), ' ms'], 'FontWeight','bold', 'FontSize', 11.5);
+            title('Grand Average Motion Tracking', 'Color', "#FF0000", 'FontSize', 16);
+            subtitle([num2str(EEG.times(i)), ' ms'], 'FontWeight','bold', 'FontSize', 16);
             xlabel('X', 'FontSize', 11, 'Color', 'k');
             ylabel('Y', 'FontSize', 11, 'Color', 'k');
             zlabel('Z', 'FontSize', 11, 'Color', 'k');
@@ -451,41 +522,41 @@ for cond=1 : num_conditions
             end
 
 
-            % Draw or update the circle detection around the wrist
-            for idx = 1:length(highlightIndices)
-                foton = highlightIndices(idx);
+            % % Draw or update the circle detection around the wrist
+            % for idx = 1:length(highlightIndices)
+            %     foton = highlightIndices(idx);
+            %
+            %     % Define coordinates for the corners of the shape around the point
+            %     if idx == 1  % Square for the eye
+            %         squareX = x_coords(foton) + highlightSize_square * [-1.5, 1.5, 1.5, -1.5, -1.5];
+            %         squareY = y_coords(foton) + highlightSize_square * [-1.5, -1.5, 1.5, 1.5, -1.5];
+            %         squareZ = z_coords(foton) * ones(1, 5);  % Keep the square in the same plane
+            %         highlightColor = highlightColorEye;  % Red for the eye
+            %
+            %         % Draw the square using patch
+            %         %highlightPatch(idx) = patch(squareX, squareY, squareZ, 'FaceColor', 'none', 'EdgeColor', highlightColor, 'LineWidth', 2, 'Linestyle', '-.');
+            %
+            %     else  % Circle for the wrist
+            %
+            %         % Create a set of points that form a circle in 3D
+            %         theta = linspace(0, 2*pi, 50); % Number of points can be adjusted for smoothness
+            %         circleX = x_coords(foton) + highlightSize_circle* cos(theta);
+            %         circleY = y_coords(foton) + highlightSize_circle* sin(theta);
+            %         circleZ = z_coords(foton) * ones(size(circleX));  % Keep the circle in the same plane
+            %         highlightColor = highlightColorWrist;
+            %
+            %         % Draw the circle using patch
+            %         highlightPatch(idx) = patch(circleX, circleY, circleZ, 'FaceColor', 'none', 'EdgeColor', 'k', 'LineWidth', 2, 'Linestyle', '-');
+            %
+            %     end
+            %
+            % end
 
-                % Define coordinates for the corners of the shape around the point
-                if idx == 1  % Square for the eye
-                    squareX = x_coords(foton) + highlightSize_square * [-1.5, 1.5, 1.5, -1.5, -1.5];
-                    squareY = y_coords(foton) + highlightSize_square * [-1.5, -1.5, 1.5, 1.5, -1.5];
-                    squareZ = z_coords(foton) * ones(1, 5);  % Keep the square in the same plane
-                    highlightColor = highlightColorEye;  % Red for the eye
 
-                    % Draw the square using patch
-                    highlightPatch(idx) = patch(squareX, squareY, squareZ, 'FaceColor', 'none', 'EdgeColor', highlightColor, 'LineWidth', 2, 'Linestyle', '-.');
-
-                else  % Circle for the wrist
-
-                    % Create a set of points that form a circle in 3D
-                    theta = linspace(0, 2*pi, 50); % Number of points can be adjusted for smoothness
-                    circleX = x_coords(foton) + highlightSize_circle* cos(theta);
-                    circleY = y_coords(foton) + highlightSize_circle* sin(theta);
-                    circleZ = z_coords(foton) * ones(size(circleX));  % Keep the circle in the same plane
-                    highlightColor = highlightColorWrist;
-
-                    % Draw the circle using patch
-                    highlightPatch(idx) = patch(circleX, circleY, circleZ, 'FaceColor', 'none', 'EdgeColor', 'k', 'LineWidth', 2, 'Linestyle', '-');
-
-                end
-
-            end
-
-
-            % Add legend outside the loop
-            if exist('highlightPatch', 'var')
-                legend(highlightPatch, highlightLabels, 'Location', 'southeastoutside', 'FontSize', 10);
-            end
+            % % Add legend outside the loop
+            % if exist('highlightPatch', 'var')
+            %     legend(highlightPatch, highlightLabels, 'Location', 'southeastoutside', 'FontSize', 10);
+            % end
 
 
             % % If the current frame is the onset frame, add a horizontal line
@@ -558,7 +629,7 @@ for cond=1 : num_conditions
             % colormap(jet(250));
 
 
-            subplotTopo = subplot(2, 3, 2);
+            subplotTopo = subtightplot(2, 3, 2);
             topoplot(ERP(:, i), EEG.chanlocs, 'electrodes', 'off', 'maplimits', [-20 20], ...
                 'whitebk', 'on', ...
                 'shading', 'interp');
@@ -572,25 +643,26 @@ for cond=1 : num_conditions
             % Position the text at the bottom center of each subplot
             text('Parent', subplotTopo, 'String', [num2str(EEG.times(i)), ' ms'], ...
                 'Units', 'normalized', ...
-                'Position', [0.5, normalizedBottom - 0.55, 0], ... % You may need to adjust the 0.1 offset
+                'Position', [0.5, normalizedBottom - 0.40, 0], ... % You may need to adjust the 0.1 offset
                 'HorizontalAlignment', 'center', ...
                 'VerticalAlignment', 'top', ... % 'top' aligns the text at its top to the given Y position
-                'FontSize', 11.5, 'FontWeight', 'bold');  % Adjust font size as needed
+                'FontSize', 16, 'FontWeight', 'bold');  % Adjust font size as needed
+            set(gca, 'FontSize', 16);
 
 
             % % Plot EEG waveform
-            subtitle(subplotERP, [num2str(EEG.times(i)), ' ms'], 'FontWeight', 'bold', 'FontSize', 11.5);
+            subtitle(subplotERP, [num2str(EEG.times(i)), ' ms'], 'FontWeight', 'bold', 'FontSize', 16);
 
             % Update the XData property of the vertical line to move it forward
             set(currentPointLine, 'XData', [EEG.times(i), EEG.times(i)]);
 
 
             if cond == 1
-                sgtitle('Grand Average Motion Tracking and ERP [N=27]: Hits', 'Color', "#A2142F", 'Fontweight', 'bold'); % Super title
+                sgtitle('Hits', 'Color', "#A2142F", 'FontSize', 16, 'Fontweight', 'bold'); % Super title
             elseif cond ==2
-                sgtitle('Grand Average Motion Tracking and ERP [N=27]: Misses', 'Color', "#A2142F", 'Fontweight', 'bold'); % Super title
+                sgtitle('Misses', 'Color', "#A2142F", 'FontSize', 16, 'Fontweight', 'bold'); % Super title
             elseif cond == 3
-                sgtitle('Grand Average Motion Tracking and ERP [N=27]', 'Color', "#A2142F", 'Fontweight', 'bold'); % Super title
+                %sgtitle('Grand Average Motion Tracking and ERP', 'Color', "#A2142F", 'Fontweight', 'bold'); % Super title
             end
 
 
@@ -599,16 +671,19 @@ for cond=1 : num_conditions
             if i == (find(EEG.times==-200))  % A couple of frames before Peak ERP index
 
                 if cond == 1 % hit
-                    % % saveas(gcf, [outpath, 'Mind_grand_hoop_hit_BP', '.jpg']); % Save the figure as a PNG image
+
                     saveas(gcf, [outpath, '\\group_analysis\\','Mind_grand_hoop_hit_BP', '.jpg']); % Save the figure as a PNG image
+                    %save_fig(gcf,[outpath, '\\group_analysis\\',], 'Mind_grand_hoop_hit_BP');
 
                 elseif cond == 2 % miss
-                    % % saveas(gcf, [outpath, 'Mind_grand_hoop_miss_BP', '.jpg']); % Save the figure as a PNG image
+
                     saveas(gcf, [outpath, '\\group_analysis\\','Mind_grand_hoop_miss_BP', '.jpg']); % Save the figure as a PNG image
+                    %save_fig(gcf,[outpath, '\\group_analysis\\',], 'Mind_grand_hoop_miss_BP');
 
                 elseif cond == 3 % all
-                    % % saveas(gcf, [outpath, 'Mind_grand_hoop_BP', '.jpg']); % Save the figure as a PNG image
+
                     saveas(gcf, [outpath, '\\group_analysis\\','Mind_grand_hoop_BP', '.jpg']); % Save the figure as a PNG image
+                    %save_fig(gcf,[outpath, '\\group_analysis\\',], 'Mind_grand_hoop_BP');
 
                 end
 
@@ -616,23 +691,49 @@ for cond=1 : num_conditions
 
 
             % Save the frame as an image in the RP peak
-            if i == (find(EEG.times==0))  % Basketball onset reference frame
+            if i == (find(EEG.times==-2500))  % Basketball onset reference frame
 
                 if cond == 1 % hit
-                    % % saveas(gcf, [outpath, 'Mind_grand_hoop_hit_0', '.jpg']); % Save the figure as a PNG image
+
                     saveas(gcf, [outpath, '\\group_analysis\\','Mind_grand_hoop_hit_0', '.jpg']); % Save the figure as a PNG image
+                    %save_fig(gcf,[outpath, '\\group_analysis\\',], 'Mind_grand_hoop_hit_0');
 
                 elseif cond == 2 % miss
-                    % % saveas(gcf, [outpath, 'Mind_grand_hoop_miss_0', '.jpg']); % Save the figure as a PNG image
+
                     saveas(gcf, [outpath, '\\group_analysis\\','Mind_grand_hoop_miss_0', '.jpg']); % Save the figure as a PNG image
+                    %save_fig(gcf,[outpath, '\\group_analysis\\',], 'Mind_grand_hoop_miss_0');
 
                 elseif cond == 3 % all
-                    % % saveas(gcf, [outpath, 'Mind_grand_hoop_0', '.jpg']); % Save the figure as a PNG image
+
                     saveas(gcf, [outpath, '\\group_analysis\\','Mind_grand_hoop_0', '.jpg']); % Save the figure as a PNG image
+
+                    % save_fig(gcf,[outpath, '\\group_analysis\\',], 'Mind_grand_hoop_0',...
+                    %     'fontsize', 8, ...
+                    %     'figsize', [35, 20], ...
+                    %     'figtypes', {'.png', '.svg'},...
+                    %     'dpi', 600);
 
                 end
 
             end
+
+            % % Save the frame as an image in the RP peak
+            % if i == (find(EEG.times== round(grand_avgOnsetTime_rev) ))  % A couple of frames before Peak ERP index
+            %
+            %     if cond == 1 % hit
+            %
+            %         saveas(gcf, [outpath, '\\group_analysis\\','Mind_grand_hoop_hit_setpoint_', '.jpg']); % Save the figure as a PNG image
+            %
+            %     elseif cond == 2 % miss
+            %
+            %         saveas(gcf, [outpath, '\\group_analysis\\','Mind_grand_hoop_miss_setpoint_', '.jpg']); % Save the figure as a PNG image
+            %
+            %     elseif cond == 3 % all
+            %         saveas(gcf, [outpath, '\\group_analysis\\','Mind_grand_hoop_setpoint_', '.jpg']); % Save the figure as a PNG image
+            %
+            %     end
+            %
+            % end
 
 
             % Capture frame

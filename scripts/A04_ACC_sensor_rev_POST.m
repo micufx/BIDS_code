@@ -1,5 +1,14 @@
 clc, clear, close all;
 
+%% Onset detection with wrist sensor (movement onset - plotting)
+
+% This code uses accelerometer data to detect the onset of the movement
+% based on wrist acceleration, saving the onset of the movement of each
+% trail of all participants. This second part is in charge to plot those
+% detected movement onset timestamps after detection.
+
+% Miguel Contreras-Altamirano, 2025
+
 %% Loading data
 
 mainpath = 'C:\Users\micua\Desktop\eeglab2023.0\'; % eeglab folder
@@ -451,7 +460,7 @@ for sub = 1 : length(files)
 
             % Save the figure as a PNG image
             saveas(acc_fig_rev, [out_subfold, 'ACC_fig_rev_hit_', participant, '.jpg']);
-            saveas(acc_fig_rev, [outpath, '\\group_analysis\\','ACC_fig_rev_hit_', participant, '.jpg']); % Save the figure as a PNG image
+            %saveas(acc_fig_rev, [outpath, '\\group_analysis\\','ACC_fig_rev_hit_', participant, '.jpg']); % Save the figure as a PNG image
 
 
         elseif cond == 2 % 'miss'
@@ -463,8 +472,8 @@ for sub = 1 : length(files)
                 'markers_time_acc', 'markers_sample_acc');
 
             % Save the figure as a PNG image
-            % saveas(acc_fig_rev, [out_subfold, 'ACC_fig_rev_miss_', participant, '.jpg']);
-            saveas(acc_fig_rev, [outpath, '\\group_analysis\\','ACC_fig_rev_miss_', participant, '.jpg']); % Save the figure as a PNG image
+            saveas(acc_fig_rev, [out_subfold, 'ACC_fig_rev_miss_', participant, '.jpg']);
+            %saveas(acc_fig_rev, [outpath, '\\group_analysis\\','ACC_fig_rev_miss_', participant, '.jpg']); % Save the figure as a PNG image
 
 
         elseif cond == 3  % % 'none'
@@ -477,7 +486,7 @@ for sub = 1 : length(files)
 
             % Save the figure as a PNG image
             saveas(acc_fig_rev, [out_subfold, 'ACC_fig_rev_', participant, '.jpg']);
-            saveas(acc_fig_rev, [outpath, '\\group_analysis\\','ACC_fig_rev_', participant, '.jpg']);
+            %saveas(acc_fig_rev, [outpath, '\\group_analysis\\','ACC_fig_rev_', participant, '.jpg']);
 
         end
 

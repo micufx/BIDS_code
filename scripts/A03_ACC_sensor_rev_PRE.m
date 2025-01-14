@@ -1,5 +1,14 @@
 clc, clear, close all;
 
+%% Onset detection with wrist sensor (time reference set-point - plotting)
+
+% This code uses accelerometer data to detect the onset of the movement
+% based on wrist acceleration, saving the onset of the movement of each
+% trail of all participants. This first part of the procedure is in charge
+% to detect timestamps of reference (eye-wrist intersection).
+
+% Miguel Contreras-Altamirano, 2025
+
 %% Loading data
 
 mainpath = 'C:\Users\micua\Desktop\eeglab2023.0\'; % eeglab folder
@@ -9,7 +18,7 @@ files = dir( fullfile( path,'\*.xdf')); % listing data sets
 
 num_conditions = 3; % (Conditions and overall: 1=hit 2=miss 3=all)
 
-for sub = 1 : length(files)
+for sub = 1 : 1%length(files)
 
     participant = extractBefore(files(sub).name, '.xdf');
     out_subfold = [outpath, participant, '\\'];

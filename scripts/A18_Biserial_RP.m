@@ -1,6 +1,9 @@
 clc, clear, close all;
 
-%% Point-biserial correlation
+%% Point-biserial correlation in Readiness Potential 
+
+% This code applies point-biserial correlation to the RP between
+% conditions.
 
 % The point-biserial correlation is a specific case of the Pearson
 % correlation coefficient that measures the strength and direction of the
@@ -22,6 +25,7 @@ clc, clear, close all;
 % strength of the relationship between the feature and the condition, while
 % the P_Value indicates the statistical significance of this relationship.
 
+% Miguel Contreras-Altamirano, 2025
 
 %% Settings data
 

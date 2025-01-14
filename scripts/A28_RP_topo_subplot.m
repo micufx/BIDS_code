@@ -1,5 +1,14 @@
 clc; clear; close all;
 
+%% Readiness Potential topographies
+
+% This code detects the Readiness Potential onset of each participant and
+% plot their respective topography together with the accuracy percentage of
+% basketball free-throw shooting.
+
+% Miguel Contreras-Altamirano, 2025
+
+
 %% Paths and Files
 mainpath = 'C:\Users\micua\Desktop\eeglab2023.0\'; % eeglab folder
 path = 'C:\Users\micua\OneDrive - Benemérita Universidad Autónoma de Puebla\NCP_Basketball\MediaPipe\';
@@ -238,10 +247,10 @@ end
 
 %% Save figures
 
-% for f = 1:numFigures
-%     set(0, 'CurrentFigure', figures{f});
-%     saveas(figures{f}, fullfile(outpath, sprintf(['RP_percentage_', cond_label, '_%d.jpg'], f)));
-%     saveas(figures{f}, fullfile(outpath, 'group_analysis', sprintf(['RP_percentage_', cond_label, '_%d.jpg'], f)));
-% end
+for f = 1:numFigures
+    set(0, 'CurrentFigure', figures{f});
+    saveas(figures{f}, fullfile(outpath, sprintf(['RP_percentage_', cond_label, '_%d.jpg'], f)));
+    saveas(figures{f}, fullfile(outpath, 'group_analysis', sprintf(['RP_percentage_', cond_label, '_%d.jpg'], f)));
+end
 
 %%

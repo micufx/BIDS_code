@@ -1,5 +1,15 @@
 clc, clear, close all;
 
+%% Onset detection with wrist sensor (movement onset)
+
+% This code detects the movement onset based on the Reverse Copmputational
+% Method algorythm using the previously time references detected by the
+% human pose motion and with help of the motion sensor attached to the
+% wrist of participants.
+
+% Miguel Contreras-Altamirano, 2025
+
+
 %% Loading data
 
 mainpath = 'C:\Users\micua\Desktop\eeglab2023.0\'; % eeglab folder
@@ -9,7 +19,7 @@ files = dir( fullfile( path,'\*.xdf')); % listing data sets
 
 num_conditions = 3; % (Conditions and overall: 1=hit 2=miss 3=all)
 
-for sub = 1 : length(files)
+for sub = 1 : 1%length(files)
 
     participant = extractBefore(files(sub).name, '.xdf');
     out_subfold = [outpath, participant, '\\'];
@@ -446,11 +456,11 @@ for sub = 1 : length(files)
 
 
         %% Saving
-
-        % Save the combined events structure
-        save([out_subfold, 'events_all_', participant, '.mat'], 'all_events', 'events_MP', 'events_ACC',...
-            'timeseries_mp', 'timestamps_mp', 'timeseries_eeg', 'timestamps_eeg', ...
-            'sampling_rate_eeg', 'sampling_rate_mp', 'sampling_rate_acc');
+        % 
+        % % Save the combined events structure
+        % save([out_subfold, 'events_all_', participant, '.mat'], 'all_events', 'events_MP', 'events_ACC',...
+        %     'timeseries_mp', 'timestamps_mp', 'timeseries_eeg', 'timestamps_eeg', ...
+        %     'sampling_rate_eeg', 'sampling_rate_mp', 'sampling_rate_acc');
 
 
 

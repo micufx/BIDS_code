@@ -1,5 +1,12 @@
 clc, clear, close all;
 
+%% Motion capture combined with mobile EEG
+
+% This code creates a grand average Readiness Potential.
+
+% Miguel Contreras-Altamirano, 2025
+
+
 %% EEG data loading
 
 mainpath = 'C:\Users\micua\Desktop\eeglab2023.0\'; % eeglab folder

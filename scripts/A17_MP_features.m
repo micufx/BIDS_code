@@ -1,5 +1,12 @@
 clc, clear, close all;
 
+%% Feature extraction of the human pose
+
+% This code extract important features of the human pose (X, Y and Z 
+% coordinates) per conditions. 
+
+% Miguel Contreras-Altamirano, 2025
+
 %% EEG data loading
 
 mainpath = 'C:\Users\micua\Desktop\eeglab2023.0\'; % eeglab folder
@@ -10,7 +17,7 @@ files = dir(fullfile(path, '\*.xdf')); % listing data sets
 num_conditions = 2; % (Conditions: 1=hit 2=miss)
 
 % Define an array of landmark times to loop through
-Landmarks = [2 : 0.1 : 1];  % Time of landmarks to analyze (in seconds)
+Landmarks = [-2.5 : 0.1 : 1];  % Time of landmarks to analyze (in seconds)
 
 % Multiply by 1000 to convert to milliseconds, and round to avoid precision issues
 Landmarks = round(Landmarks * 1000) / 1000;
@@ -117,11 +124,13 @@ for sub = 1:length(files)
         features_PLD.Properties.RowNames = trialNumbers;
 
         % Save it in .mat file with the current landmark time in the name
-        save([out_subfold, participant, '_features_PLD_', num2str(Landmark * 1000), '_ms', '.mat'], 'features_PLD');
+        %save([out_subfold, participant, '_features_PLD_', num2str(Landmark * 1000), '_ms', '.mat'], 'features_PLD');
 
-        clear features_PLD
+        %clear features_PLD
    
     end
 
         disp([participant, ' finalized!']);
 end
+
+%%

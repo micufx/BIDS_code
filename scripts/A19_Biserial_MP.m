@@ -1,6 +1,9 @@
 clc, clear, close all;
 
-%% Point-biserial correlation
+%% Point-biserial correlation of the human pose
+
+% This code applies point-biserial correlation to the human pose between
+% conditions.
 
 % The point-biserial correlation is a specific case of the Pearson
 % correlation coefficient that measures the strength and direction of the
@@ -22,18 +25,20 @@ clc, clear, close all;
 % strength of the relationship between the feature and the condition, while
 % the P_Value indicates the statistical significance of this relationship.
 
-% Settings data
+% Miguel Contreras-Altamirano, 2025
+
+%% Settings data
 mainpath = 'C:\Users\micua\Desktop\eeglab2023.0\'; % eeglab folder
 path = 'C:\Users\micua\OneDrive - Benemérita Universidad Autónoma de Puebla\NCP_Basketball\MediaPipe\';
 outpath = 'C:\\Users\\micua\\OneDrive - Benemérita Universidad Autónoma de Puebla\\Oldenburg_University\\Thesis\\data_hoops\\';
 files = dir(fullfile(path, '\*.xdf')); % listing data sets
 
 % Landmark times to analyze
-Landmarks = -2:0.1:1; % Consecutive landmarks
+Landmarks = -2.5:0.1:1; % Consecutive landmarks
 
 %% Loop through participants and landmark times
 
-for sub = 1:length(files)
+for sub = 1:1%length(files)
 
     participant = extractBefore(files(sub).name, '.xdf');
     out_subfold = [outpath, participant, '\\'];

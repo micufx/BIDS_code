@@ -1,8 +1,13 @@
-%% Convert source data to BIDS
 clc; clear; close all;
 
-%% Dynamic paths
+%% Convert source data to BIDS
 
+% This code transforms the existing raw data sets into BIDS format.
+
+% Miguel Contreras-Altamirano, 2025
+
+
+%% Settings
 % Get the full path of the current script
 scriptPath = fileparts(mfilename('fullpath'));
 proj_dir = fullfile(scriptPath, '..');
@@ -35,7 +40,7 @@ cfg.bidsroot = './data/bids';  % write to the present working directory
 
 %% Loop over datasets
 
-for sub = 1: length(files)
+for sub = 1: 1%length(files)
 
     participant = extractBefore(files(sub).name, '.xdf');  % get subject name
     data = load_xdf(fullfile(dir_data,'raw', files(sub).name)); % Saving the data in a variable
@@ -124,7 +129,7 @@ for sub = 1: length(files)
     
 
     % Generate README file
-    README = sprintf('The experiment included 27 participants. \n- Miguel Contreras-Altamirano (December, 2024)');
+    README = sprintf('The experiment included 27 participants. \n- Miguel Contreras-Altamirano (December, 2025)');
 
     % Call data2bids for EEG
     data2bids(cfg, data_eeg);
@@ -210,16 +215,17 @@ for sub = 1: length(files)
     cfg.datatype = 'motion';
     cfg.task = 'Freethrow';
     cfg.bidsroot = './data/bids';
-    cfg.tracksys = 'MovellaDOT';
-    cfg.motion.TrackingSystemName = 'MovellaDOT';
+    cfg.tracksys = 'Movella DOT';
+    cfg.motion.TrackingSystemName = 'Movella DOT';
     cfg.motion.samplingrate = sampling_rate_acc;
 
     % specify channel details, this overrides the details in the original data structure
+    cfg.channels = [];
     cfg.channels.name = mocap.label;
-    cfg.channels.component = {'x','y','z', 'x','y','z'};
-    cfg.channels.type = {'ACCEL','ACCEL','ACCEL','GYRO', 'GYRO', 'GYRO'};
+    cfg.channels.component = cellstr(repmat({'acc_x','acc_y','acc_z', 'gyro_x','gyro_y','gyro_z'},1, length(mocap.label)/3));
+    cfg.channels.type = cellstr(repmat({'ACCEL''GYRO'},length(mocap.label),1));
     cfg.channels.tracked_point = mocap.label;
-    cfg.channels.units = cellstr(repmat('m/s^2',length(mocap.label),1));
+    cfg.channels.units = cellstr(repmat('m s−2',length(mocap.label),1));
 
     mocap = ft_datatype_raw(mocap);
 

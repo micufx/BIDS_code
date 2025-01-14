@@ -1,5 +1,11 @@
 clc, clear, close all;
 
+%% Grand average motion
+
+% This code creates a grand average motion across all peaople of all trials
+
+% Miguel Contreras-Altamirano, 2025
+
 %% EEG data loading
 
 mainpath = 'C:\Users\micua\Desktop\eeglab2023.0\'; % eeglab folder

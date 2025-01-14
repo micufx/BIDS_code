@@ -1,5 +1,13 @@
 clc, clear, close all;
 
+%% P-values of the human pose correlation
+
+% This code calculates the p-values of the correlation of human pose 
+% features between conditions.
+
+% Miguel Contreras-Altamirano, 2025
+
+
 %% Settings data
 mainpath = 'C:\Users\micua\Desktop\eeglab2023.0\'; % eeglab folder
 path = 'C:\Users\micua\OneDrive - Benemérita Universidad Autónoma de Puebla\NCP_Basketball\MediaPipe\';
@@ -7,7 +15,7 @@ outpath = 'C:\\Users\\micua\\OneDrive - Benemérita Universidad Autónoma de Pue
 files = dir(fullfile(path, '*.xdf')); % listing data sets
 
 % Landmark times to analyze
-Landmarks = -2:0.1:1; % Consecutive landmarks
+Landmarks = -2.5:0.1:1; % Consecutive landmarks
 
 numParticipants = length(files); % number of participants
 numFeatures = 99; % number of features
@@ -67,9 +75,10 @@ for figIdx = 1:numFigures
     % First plot for Landmark_1
     subplot(1, 2, 1);
     imagesc(pvalues_Matrix_PLD_1);
-    colorbar;
-    title(['Point bi-serial correlation of PLD ', '[p-values]'], 'FontSize', 12);
-    subtitle(['Trials prior movement / [Landmark at ', num2str(Landmark_1*1000), ' ms]'], 'FontSize', 12);
+    cb = colorbar; % Create the colorbar
+    ylabel(cb, 'p-Values', 'FontWeight', 'bold', 'FontSize', 11); % Label for colorbar
+    title(['Pose Landmarks Differences [Hits vs Misses]'], 'FontSize', 12);
+    subtitle(['Significant Differences [p < 0.05*] / [Landmark at ', num2str(Landmark_1*1000), ' ms]'], 'FontSize', 12);
     xlabel('Participants', 'FontWeight', 'bold', 'FontSize', 11.5);
     ylabel('Features', 'FontWeight', 'bold', 'FontSize', 11.5);
     axis tight;
@@ -91,9 +100,10 @@ for figIdx = 1:numFigures
     if ~isempty(Landmark_2)
         subplot(1, 2, 2);
         imagesc(pvalues_Matrix_PLD_2);
-        colorbar;
-        title(['Point bi-serial correlation of PLD ', '[p-values]'], 'FontSize', 12);
-        subtitle(['Trials prior movement / [Landmark at ', num2str(Landmark_2*1000), ' ms]'], 'FontSize', 12);
+        cb = colorbar; % Create the colorbar
+        ylabel(cb, 'p-Values', 'FontWeight', 'bold', 'FontSize', 11); % Label for colorbar
+        title(['Pose Landmarks Differences [Hits vs Misses]'], 'FontSize', 12);
+        subtitle(['Significant Differences [p < 0.05*] / [Landmark at ', num2str(Landmark_2*1000), ' ms]'], 'FontSize', 12);
         xlabel('Participants', 'FontWeight', 'bold', 'FontSize', 11.5);
         ylabel('Features', 'FontWeight', 'bold', 'FontSize', 11.5);
         axis tight;
@@ -114,9 +124,9 @@ for figIdx = 1:numFigures
 
     %% Save the figure
     if ~isempty(Landmark_2)
-        saveas(gcf, [outpath, '\\group_analysis\\', 'Feat_significance_PLD_', num2str(Landmark_1*1000), '_', num2str(Landmark_2*1000), '_ms', '.png']);
+        saveas(gcf, [outpath, '\\group_analysis\\', 'Feat_significance_PLD_', num2str(Landmark_1*1000), '_', num2str(Landmark_2*1000), '_ms', '.jpg']);
     else
-        saveas(gcf, [outpath, '\\group_analysis\\', 'Feat_significance_PLD_', num2str(Landmark_1*1000), '_ms', '.png']);
+        saveas(gcf, [outpath, '\\group_analysis\\', 'Feat_significance_PLD_', num2str(Landmark_1*1000), '_ms', '.jpg']);
     end
 
 end
@@ -161,5 +171,6 @@ participantIDs = arrayfun(@(x) sprintf('sub_%02d', x), 1:numParticipants, 'Unifo
 sig_features_combined.ParticipantID = participantIDs;
 sig_features_combined = movevars(sig_features_combined, 'ParticipantID', 'Before', sig_features_combined.Properties.VariableNames{1});
 
-% Save the combined table
+
+%% Save the combined table
 save([outpath, 'sig_bin_feat_motion.mat'], 'sig_features_combined');
