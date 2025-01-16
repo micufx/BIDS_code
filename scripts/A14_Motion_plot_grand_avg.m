@@ -21,7 +21,7 @@ num_conditions = 3; % (Conditions and overall: 1=hit 2=miss 3=all)
 %% Selecting participant
 
 
-for cond=1 : 1%num_conditions
+for cond=1 : num_conditions
 
 
     % Loading desired data
